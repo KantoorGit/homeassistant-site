@@ -7,6 +7,7 @@ import {
   getArtikel,
   getArtikelen,
 } from "@/lib/artikelen";
+import { youtubeId } from "@/lib/beheer/hulp";
 import { categorieen, categoriePad, isTaal, talen, teksten } from "@/lib/site";
 
 type Props = PageProps<"/[lang]/[categorie]/[slug]">;
@@ -50,6 +51,7 @@ export default async function Artikelpagina({ params }: Props) {
   if (pad !== `/${lang}/${categorieSlug}/${slug}`) redirect(pad);
 
   const t = teksten[lang];
+  const video = youtubeId(artikel.videoUrl);
   const categorie = categorieen.find((c) => c.id === artikel.categorieId)!;
   const isVertaling = artikel.origineleTaal !== lang;
   const origineel = isVertaling
@@ -79,9 +81,24 @@ export default async function Artikelpagina({ params }: Props) {
         </p>
       )}
 
-      <div className="kaart-beeld artikel-beeld" aria-hidden="true">
-        {artikel.isVoorbeeld && <span>{t.voorbeeld}</span>}
-      </div>
+      {video ? (
+        <div className="video">
+          <iframe
+            src={`https://www.youtube-nocookie.com/embed/${video}`}
+            title={artikel.kop}
+            allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+            loading="lazy"
+          />
+        </div>
+      ) : artikel.afbeeldingUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={artikel.afbeeldingUrl} alt="" className="artikel-foto" />
+      ) : (
+        <div className="kaart-beeld artikel-beeld" aria-hidden="true">
+          {artikel.isVoorbeeld && <span>{t.voorbeeld}</span>}
+        </div>
+      )}
 
       {artikel.intro && <p className="intro">{artikel.intro}</p>}
       <div className="artikel-tekst">

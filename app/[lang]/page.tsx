@@ -11,7 +11,9 @@ export default async function Voorpagina({ params }: PageProps<"/[lang]">) {
   if (!isTaal(lang)) notFound();
   const t = teksten[lang];
   const artikelen = await getArtikelen(lang);
-  const [hoofdartikel, ...overige] = artikelen;
+  // Hoofdartikel: het nieuwste uitgelichte artikel, anders het nieuwste.
+  const hoofdartikel = artikelen.find((a) => a.uitgelicht) ?? artikelen[0];
+  const overige = artikelen.filter((a) => a !== hoofdartikel);
 
   if (!hoofdartikel) return <p className="leeg">{t.nogLeeg}</p>;
 

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { artikelPad, type Artikel } from "@/lib/artikelen";
+import { youtubeId } from "@/lib/beheer/hulp";
 import { categorieen, teksten } from "@/lib/site";
 
 // Kaart met beeldvlak, categorie-label en kop. Zolang er geen foto's zijn,
@@ -15,10 +16,20 @@ export default function Artikelkaart({
   const categorie = categorieen.find((c) => c.id === artikel.categorieId);
   const pad = artikelPad(artikel, taal);
   const Kop = groot ? "h1" : "h2";
+  // Eigen afbeelding; anders bij een video de stilstaande beelden van YouTube.
+  const video = youtubeId(artikel.videoUrl);
+  const beeld =
+    artikel.afbeeldingUrl ??
+    (video ? `https://i.ytimg.com/vi/${video}/hqdefault.jpg` : null);
 
   return (
     <article className={groot ? "kaart kaart-groot" : "kaart"}>
       <div className="kaart-beeld" aria-hidden="true">
+        {beeld && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={beeld} alt="" loading="lazy" />
+        )}
+        {video && <span className="speelknop">▶</span>}
         {artikel.isVoorbeeld && <span>{teksten[taal].voorbeeld}</span>}
       </div>
       <div className="kaart-tekst">
