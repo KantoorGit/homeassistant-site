@@ -1,0 +1,163 @@
+[
+  {
+    "id": "2e06bb84-971e-588c-a79f-5bc1a4a8eba8",
+    "categorieId": "training",
+    "gepubliceerdOp": "2026-11-13T09:40:00+01:00",
+    "origineleTaal": "nl",
+    "auteur": "Redactie",
+    "vertalingen": {
+      "nl": {
+        "slug": "home-assistant-installeren-op-bmax",
+        "kop": "Home Assistant installeren op een Bmax mini-pc, stap voor stap",
+        "intro": "Van uitpakken tot het eerste dashboard: wat je nodig hebt, welke stappen je volgt en hoe je controleert of het gelukt is.",
+        "tekst": "Dit is een voorbeeldartikel. De definitieve tekst volgt zodra de redactie het artikel heeft geschreven.",
+        "automatischVertaald": false
+      },
+      "en": {
+        "slug": "installing-home-assistant-on-bmax",
+        "kop": "Installing Home Assistant on a Bmax mini PC, step by step",
+        "intro": "From unboxing to your first dashboard: what you need, which steps to follow and how to check that it worked.",
+        "tekst": "This is a sample article. The final text will follow once the editors have written the article.",
+        "automatischVertaald": true
+      }
+    }
+  },
+  {
+    "id": "9710297d-b6a9-5630-8b6e-bcbb75e10b37",
+    "categorieId": "claude-en-ai",
+    "gepubliceerdOp": "2026-11-13T09:12:00+01:00",
+    "origineleTaal": "nl",
+    "auteur": "Redactie",
+    "vertalingen": {
+      "nl": {
+        "slug": "claude-schrijft-je-automatisering",
+        "kop": "Zo laat je Claude een automatisering voor je schrijven",
+        "intro": "Beschrijf in gewone taal wat je wilt en laat Claude de YAML maken.",
+        "tekst": "Dit is een voorbeeldartikel. De definitieve tekst volgt zodra de redactie het artikel heeft geschreven.",
+        "automatischVertaald": false
+      },
+      "en": {
+        "slug": "claude-writes-your-automation",
+        "kop": "How to have Claude write an automation for you",
+        "intro": "Describe what you want in plain language and let Claude write the YAML.",
+        "tekst": "This is a sample article. The final text will follow once the editors have written the article.",
+        "automatischVertaald": true
+      }
+    }
+  },
+  {
+    "id": "b43f392e-3a4e-5181-93d4-d7ad89d36a86",
+    "categorieId": "dashboards",
+    "gepubliceerdOp": "2026-11-13T08:55:00+01:00",
+    "origineleTaal": "nl",
+    "auteur": "Redactie",
+    "vertalingen": {
+      "nl": {
+        "slug": "eerste-dashboard-in-tien-minuten",
+        "kop": "Je eerste dashboard in tien minuten",
+        "intro": "Met drie kaarten heb je al een overzicht van je hele huis.",
+        "tekst": "Dit is een voorbeeldartikel. De definitieve tekst volgt zodra de redactie het artikel heeft geschreven.",
+        "automatischVertaald": false
+      },
+      "en": {
+        "slug": "first-dashboard-in-ten-minutes",
+        "kop": "Your first dashboard in ten minutes",
+        "intro": "Three cards are enough for an overview of your whole home.",
+        "tekst": "This is a sample article. The final text will follow once the editors have written the article.",
+        "automatischVertaald": true
+      }
+    }
+  },
+  {
+    "id": "916f430f-a292-5bd8-bc59-8832cbff50d4",
+    "categorieId": "automatiseringen",
+    "gepubliceerdOp": "2026-11-13T08:30:00+01:00",
+    "origineleTaal": "nl",
+    "auteur": "Redactie",
+    "vertalingen": {
+      "nl": {
+        "slug": "lampen-aan-bij-zonsondergang",
+        "kop": "Lampen aan bij zonsondergang: de eenvoudigste automatisering",
+        "intro": "Een goede eerste oefening om te zien hoe triggers en acties werken.",
+        "tekst": "Dit is een voorbeeldartikel. De definitieve tekst volgt zodra de redactie het artikel heeft geschreven.",
+        "automatischVertaald": false
+      },
+      "en": {
+        "slug": "lights-on-at-sunset",
+        "kop": "Lights on at sunset: the simplest automation",
+        "intro": "A good first exercise to see how triggers and actions work.",
+        "tekst": "This is a sample article. The final text will follow once the editors have written the article.",
+        "automatischVertaald": true
+      }
+    }
+  },
+  {
+    "id": "bf3c003d-6adc-5c77-9a8e-8433e18be67e",
+    "categorieId": "hardware",
+    "gepubliceerdOp": "2026-11-13T08:02:00+01:00",
+    "origineleTaal": "nl",
+    "auteur": "Redactie",
+    "vertalingen": {
+      "nl": {
+        "slug": "zigbee-of-matter",
+        "kop": "Zigbee of Matter: wat kies je voor nieuwe apparaten?",
+        "intro": "De verschillen op een rij, met advies per situatie.",
+        "tekst": "Dit is een voorbeeldartikel. De definitieve tekst volgt zodra de redactie het artikel heeft geschreven.",
+        "automatischVertaald": false
+      },
+      "en": {
+        "slug": "zigbee-or-matter",
+        "kop": "Zigbee or Matter: what to pick for new devices?",
+        "intro": "The differences side by side, with advice per situation.",
+        "tekst": "This is a sample article. The final text will follow once the editors have written the article.",
+        "automatischVertaald": true
+      }
+    }
+  },
+  {
+    "id": "fcc318f0-9291-5ed7-9cd4-9db1317e7ff7",
+    "categorieId": "integraties",
+    "gepubliceerdOp": "2026-11-13T07:45:00+01:00",
+    "origineleTaal": "nl",
+    "auteur": "Redactie",
+    "vertalingen": {
+      "nl": {
+        "slug": "slimme-meter-koppelen-via-p1",
+        "kop": "De slimme meter koppelen via de P1-poort",
+        "intro": "Zie je stroom- en gasverbruik live in het energiedashboard.",
+        "tekst": "Dit is een voorbeeldartikel. De definitieve tekst volgt zodra de redactie het artikel heeft geschreven.",
+        "automatischVertaald": false
+      },
+      "en": {
+        "slug": "connecting-smart-meter-via-p1",
+        "kop": "Connecting your smart meter through the P1 port",
+        "intro": "See your electricity and gas usage live in the energy dashboard.",
+        "tekst": "This is a sample article. The final text will follow once the editors have written the article.",
+        "automatischVertaald": true
+      }
+    }
+  },
+  {
+    "id": "14636774-65c8-54a6-be03-daa3548bdd1e",
+    "categorieId": "aan-de-slag",
+    "gepubliceerdOp": "2026-11-13T07:20:00+01:00",
+    "origineleTaal": "nl",
+    "auteur": "Redactie",
+    "vertalingen": {
+      "nl": {
+        "slug": "wat-is-home-assistant",
+        "kop": "Wat is Home Assistant en wat heb je ervoor nodig?",
+        "intro": "Een korte uitleg voor wie nog nooit met domotica heeft gewerkt.",
+        "tekst": "Dit is een voorbeeldartikel. De definitieve tekst volgt zodra de redactie het artikel heeft geschreven.",
+        "automatischVertaald": false
+      },
+      "en": {
+        "slug": "what-is-home-assistant",
+        "kop": "What is Home Assistant and what do you need for it?",
+        "intro": "A short explanation for anyone new to home automation.",
+        "tekst": "This is a sample article. The final text will follow once the editors have written the article.",
+        "automatischVertaald": true
+      }
+    }
+  }
+]

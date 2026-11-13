@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Artikelkaart from "@/components/Artikelkaart";
+import { getArtikelen } from "@/lib/artikelen";
 import { categorieen, isTaal, talen, teksten, vindCategorie } from "@/lib/site";
-import { artikelen } from "@/lib/voorbeeldartikelen";
 
 export async function generateStaticParams() {
   return talen.flatMap((lang) =>
@@ -31,6 +31,7 @@ export default async function Categoriepagina({
   if (!categorie) notFound();
 
   const t = teksten[lang];
+  const artikelen = await getArtikelen(lang);
   const lijst =
     categorie.id === "laatste-nieuws"
       ? artikelen
@@ -44,7 +45,7 @@ export default async function Categoriepagina({
       ) : (
         <div className="raster">
           {lijst.map((artikel) => (
-            <Artikelkaart key={artikel.id} artikel={artikel} taal={lang} />
+            <Artikelkaart key={artikel.id} artikel={artikel} />
           ))}
         </div>
       )}

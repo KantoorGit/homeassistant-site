@@ -16,8 +16,10 @@ function padInTaal(pad: string, van: Taal, naar: Taal): string {
   const delen = pad.split("/").filter(Boolean).slice(1);
   if (delen.length === 0) return `/${naar}`;
   const categorie = vindCategorie(van, delen[0]);
-  if (categorie) return categoriePad(categorie, naar);
-  return `/${naar}/${delen.join("/")}`;
+  if (!categorie) return `/${naar}/${delen.join("/")}`;
+  // Bij een artikel blijft het laatste deel staan; de artikelpagina stuurt
+  // zelf door naar het adres in de gekozen taal.
+  return [categoriePad(categorie, naar), ...delen.slice(1)].join("/");
 }
 
 export default function Taalkiezer({ taal }: { taal: Taal }) {

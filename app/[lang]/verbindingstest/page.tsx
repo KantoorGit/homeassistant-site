@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { connection } from "next/server";
 import { Suspense } from "react";
+import { controleerArtikelen } from "@/lib/artikelen";
 import { maakSupabaseClient, supabaseInstellingen } from "@/lib/supabase";
 
 export const metadata: Metadata = {
@@ -111,6 +112,35 @@ async function controleer(): Promise<Uitkomst[]> {
     });
   }
 
+  // 4. Kan de site de artikelen lezen?
+  const artikelen = await controleerArtikelen();
+  if (artikelen.fout !== null) {
+    const tabelOntbreekt =
+      artikelen.code === "PGRST205" || artikelen.code === "42P01";
+    uitkomsten.push({
+      status: tabelOntbreekt ? "let-op" : "fout",
+      titel: "Artikelen uit de database",
+      uitleg: tabelOntbreekt
+        ? "De tabellen voor artikelen bestaan nog niet. Voer supabase/002_artikelen.sql uit in de SQL Editor van Supabase. Tot die tijd toont de site de voorbeeldartikelen uit de code."
+        : "De database gaf een foutmelding bij het lezen van de artikelen. De site toont zolang de voorbeeldartikelen uit de code.",
+      detail: `${artikelen.code} ${artikelen.fout}`.trim(),
+    });
+  } else if (artikelen.aantal === 0) {
+    uitkomsten.push({
+      status: "let-op",
+      titel: "Artikelen uit de database",
+      uitleg:
+        "De tabellen bestaan, maar er staan geen gepubliceerde artikelen in. De site toont zolang de voorbeeldartikelen uit de code.",
+    });
+  } else {
+    uitkomsten.push({
+      status: "goed",
+      titel: "Artikelen uit de database",
+      uitleg: "De site leest de artikelen uit de database.",
+      detail: `Aantal gepubliceerde artikelen: ${artikelen.aantal}`,
+    });
+  }
+
   return uitkomsten;
 }
 
@@ -156,7 +186,7 @@ export default function Verbindingstest() {
   return (
     <div className="test">
       <h1>Verbindingstest</h1>
-      <p>Controleert in drie stappen of de site bij de database kan.</p>
+      <p>Controleert in vier stappen of de site bij de database kan.</p>
       <Suspense fallback={<p>Bezig met controleren…</p>}>
         <Uitkomsten />
       </Suspense>

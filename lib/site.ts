@@ -3,6 +3,10 @@
 
 export const siteNaam = "Slimhuis Gids";
 
+// Zolang de site in opbouw is, blijven zoekmachines buiten. Zet dit op
+// true bij livegang; elke pagina krijgt nu de aanwijzing "noindex".
+export const zoekmachinesToelaten = false;
+
 export const talen = ["nl", "en"] as const;
 export type Taal = (typeof talen)[number];
 export const standaardTaal: Taal = "nl";
@@ -103,6 +107,10 @@ export const teksten: Record<
     onafhankelijk: string;
     taalKiezen: string;
     categorieen: string;
+    door: string;
+    vertaaldUit: string;
+    origineelBekijken: string;
+    taalInZin: Record<Taal, string>;
   }
 > = {
   nl: {
@@ -115,6 +123,10 @@ export const teksten: Record<
       "Deze site is onafhankelijk en niet verbonden aan Home Assistant of Nabu Casa.",
     taalKiezen: "Taal kiezen",
     categorieen: "Categorieën",
+    door: "Door",
+    vertaaldUit: "Automatisch vertaald uit",
+    origineelBekijken: "Origineel bekijken",
+    taalInZin: { nl: "het Nederlands", en: "het Engels" },
   },
   en: {
     ondertitel: "Everything about Home Assistant, in plain language",
@@ -126,5 +138,9 @@ export const teksten: Record<
       "This site is independent and not affiliated with Home Assistant or Nabu Casa.",
     taalKiezen: "Choose language",
     categorieen: "Categories",
+    door: "By",
+    vertaaldUit: "Automatically translated from",
+    origineelBekijken: "View original",
+    taalInZin: { nl: "Dutch", en: "English" },
   },
 };

@@ -16,7 +16,8 @@ met de database.
 | Map of bestand | Inhoud |
 |---|---|
 | `lib/site.ts` | Naam van de site, talen, categorieën en vaste teksten |
-| `lib/voorbeeldartikelen.ts` | Voorbeeldartikelen, tot de database ze levert |
+| `lib/artikelen.ts` | Artikelen ophalen uit Supabase |
+| `lib/voorbeeldartikelen.json` | Voorbeeldartikelen, getoond zolang de database leeg is |
 | `lib/supabase.ts` | Verbinding met Supabase |
 | `app/[lang]/` | De pagina's, per taal (`/nl/...`, `/en/...`) |
 | `app/globals.css` | Huisstijl: kleuren en lettertypen |
@@ -25,10 +26,16 @@ met de database.
 
 ## Koppeling met de database testen
 
-1. Open het Supabase-dashboard, ga naar de SQL Editor en voer
-   `supabase/001_verbindingstest.sql` uit.
+1. Open het Supabase-dashboard, ga naar de SQL Editor en voer de bestanden
+   in `supabase/` uit, in volgorde van nummer.
 2. Open op de gepubliceerde site `/nl/verbindingstest`.
-3. Drie keer "Goed" betekent dat de site de database kan lezen.
+3. Vier keer "Goed" betekent dat de site de database en de artikelen leest.
+
+## Zoekmachines
+
+Zolang de site in opbouw is, houdt hij zoekmachines buiten. De schakelaar
+staat in `lib/site.ts` (`zoekmachinesToelaten`); zet die op `true` bij
+livegang.
 
 ## Lokaal draaien
 

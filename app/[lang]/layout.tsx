@@ -7,7 +7,13 @@ import "@fontsource-variable/roboto-slab";
 import "../globals.css";
 import Categoriebalk from "@/components/Categoriebalk";
 import Taalkiezer from "@/components/Taalkiezer";
-import { isTaal, siteNaam, talen, teksten } from "@/lib/site";
+import {
+  isTaal,
+  siteNaam,
+  talen,
+  teksten,
+  zoekmachinesToelaten,
+} from "@/lib/site";
 
 export async function generateStaticParams() {
   return talen.map((lang) => ({ lang }));
@@ -21,6 +27,7 @@ export async function generateMetadata({
   return {
     title: { default: siteNaam, template: `%s | ${siteNaam}` },
     description: teksten[lang].ondertitel,
+    robots: zoekmachinesToelaten ? undefined : { index: false, follow: false },
   };
 }
 
