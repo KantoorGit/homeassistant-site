@@ -1,0 +1,346 @@
+/* Huisstijl volgens projectmap/05-huisstijl.md */
+:root {
+  --blauw: #1e3993;
+  --oranje: #faa634;
+  --leigrijs: #465560;
+  --wit: #ffffff;
+  --lichtgrijs: #edeef0;
+  --tekst: #212529;
+
+  --font-kop: "Roboto Slab Variable", Georgia, serif;
+  --font-tekst: "Roboto Variable", "PingFang SC", "Microsoft YaHei",
+    "Noto Sans SC", system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--wit);
+  color: var(--tekst);
+  font-family: var(--font-tekst);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+a {
+  color: var(--blauw);
+}
+
+a:focus-visible {
+  outline: 3px solid var(--oranje);
+  outline-offset: 2px;
+}
+
+h1,
+h2 {
+  font-family: var(--font-kop);
+  line-height: 1.2;
+  margin: 0;
+  text-wrap: balance;
+}
+
+.inhoud {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+/* Kop met naam en taalkiezer */
+.kop {
+  background: var(--wit);
+}
+
+.kop-rij {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 64px;
+}
+
+.logo {
+  font-family: var(--font-kop);
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--blauw);
+  text-decoration: none;
+}
+
+.taalkiezer {
+  display: flex;
+  gap: 4px;
+}
+
+.taalkiezer a {
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  text-decoration: none;
+  color: var(--leigrijs);
+}
+
+.taalkiezer a[aria-current] {
+  background: var(--lichtgrijs);
+  color: var(--blauw);
+  font-weight: 600;
+}
+
+/* Categoriebalk: één laag, op een telefoon horizontaal te scrollen */
+.categoriebalk {
+  background: var(--blauw);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.categoriebalk ul {
+  display: flex;
+  list-style: none;
+  margin: 0 auto;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.categoriebalk ul::-webkit-scrollbar {
+  display: none;
+}
+
+.categoriebalk a {
+  display: block;
+  padding: 12px 14px 9px;
+  border-bottom: 3px solid transparent;
+  color: var(--wit);
+  font-weight: 500;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.categoriebalk a:hover,
+.categoriebalk a[aria-current] {
+  border-bottom-color: var(--oranje);
+}
+
+.categoriebalk li:first-child a {
+  padding-left: 0;
+}
+
+main.inhoud {
+  padding-top: 24px;
+  padding-bottom: 48px;
+}
+
+/* Voorpagina: hoofdkolom en kolom met het laatste nieuws */
+.voorpagina {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 32px;
+}
+
+.raster {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+  margin-top: 24px;
+}
+
+.kaart-beeld {
+  aspect-ratio: 16 / 9;
+  display: flex;
+  align-items: flex-end;
+  padding: 10px;
+  border-radius: 4px;
+  background: linear-gradient(135deg, var(--blauw), var(--leigrijs));
+  color: rgb(255 255 255 / 0.75);
+  font-size: 0.75rem;
+}
+
+.kaart-tekst {
+  padding-top: 10px;
+}
+
+.kaart h2 {
+  font-size: 1.1rem;
+}
+
+.kaart-groot {
+  position: relative;
+}
+
+.kaart-groot .kaart-beeld {
+  aspect-ratio: 16 / 8;
+}
+
+.kaart-groot h1 {
+  font-size: clamp(1.5rem, 3.2vw, 2.4rem);
+  color: var(--blauw);
+}
+
+.intro {
+  margin: 10px 0 0;
+  font-size: 1.1rem;
+  max-width: 65ch;
+}
+
+.label {
+  display: inline-block;
+  margin: 0 0 6px;
+  padding: 1px 8px;
+  border-radius: 3px;
+  background: var(--oranje);
+  color: var(--tekst);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.zijkolom {
+  align-self: start;
+  background: var(--lichtgrijs);
+  border-radius: 4px;
+  padding: 16px;
+}
+
+.zijkolom h2 {
+  font-size: 1.2rem;
+  color: var(--blauw);
+  padding-bottom: 8px;
+  border-bottom: 3px solid var(--oranje);
+}
+
+.zijkolom ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.zijkolom li {
+  display: grid;
+  grid-template-columns: 3.2em 1fr;
+  gap: 8px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgb(70 85 96 / 0.25);
+  font-size: 0.95rem;
+  line-height: 1.35;
+}
+
+.zijkolom li:last-child {
+  border-bottom: 0;
+}
+
+.zijkolom time {
+  color: var(--leigrijs);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Categoriepagina */
+.categoriepagina h1 {
+  font-size: 2rem;
+  color: var(--blauw);
+}
+
+.leeg {
+  color: var(--leigrijs);
+}
+
+/* Verbindingstest */
+.test h1 {
+  font-size: 2rem;
+  color: var(--blauw);
+  margin-bottom: 8px;
+}
+
+.test ol {
+  list-style: none;
+  padding: 0;
+  max-width: 760px;
+}
+
+.test li {
+  display: grid;
+  grid-template-columns: 5.5em 1fr;
+  gap: 12px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--lichtgrijs);
+}
+
+.test .status {
+  align-self: start;
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.status-goed {
+  background: #d7f0df;
+  color: #0f5a2a;
+}
+
+.status-fout {
+  background: #f8d7da;
+  color: #7a1420;
+}
+
+.status-let-op {
+  background: #fdeccf;
+  color: #6b4300;
+}
+
+.test h2 {
+  font-family: var(--font-tekst);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.test p {
+  margin: 4px 0 0;
+}
+
+.test code {
+  background: var(--lichtgrijs);
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: 0.9em;
+  overflow-wrap: anywhere;
+}
+
+/* Voettekst */
+.voet {
+  background: var(--lichtgrijs);
+  color: var(--leigrijs);
+  padding: 24px 0;
+  font-size: 0.9rem;
+}
+
+.voet p {
+  margin: 0;
+}
+
+/* Tablet en telefoon */
+@media (max-width: 900px) {
+  .voorpagina {
+    grid-template-columns: 1fr;
+  }
+
+  .raster {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .raster {
+    grid-template-columns: 1fr;
+  }
+
+  .logo {
+    font-size: 1.3rem;
+  }
+}
