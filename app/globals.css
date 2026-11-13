@@ -454,3 +454,493 @@ main.inhoud {
   border: 0;
   border-radius: 4px;
 }
+
+/* ------------------------------------------------------------------ */
+/* Accountmenu in de kop                                               */
+/* ------------------------------------------------------------------ */
+.kop-rechts {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.accountmenu a {
+  display: inline-block;
+  padding: 6px 12px;
+  border: 1px solid var(--blauw);
+  border-radius: 4px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+  max-width: 14em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------------------ */
+/* Knoppen en formulieren                                              */
+/* ------------------------------------------------------------------ */
+.knop {
+  display: inline-block;
+  padding: 10px 18px;
+  border: 2px solid var(--blauw);
+  border-radius: 4px;
+  font: inherit;
+  font-weight: 600;
+  line-height: 1.2;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.knop-hoofd {
+  background: var(--blauw);
+  color: var(--wit);
+}
+
+.knop-licht {
+  background: var(--wit);
+  color: var(--blauw);
+}
+
+.knop-gevaar {
+  background: var(--wit);
+  border-color: #a4202f;
+  color: #a4202f;
+}
+
+.knop:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.knop:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+summary:focus-visible {
+  outline: 3px solid var(--oranje);
+  outline-offset: 2px;
+}
+
+.knoppenrij {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.accountkader {
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.accountkader h1,
+.forum h1,
+.moderatie h1 {
+  font-size: 2rem;
+  color: var(--blauw);
+  margin-bottom: 16px;
+}
+
+.formulier {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.formulier-breed {
+  max-width: 760px;
+}
+
+.formulier label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-weight: 600;
+}
+
+.formulier small,
+.klein {
+  font-weight: 400;
+  font-size: 0.85rem;
+  color: var(--leigrijs);
+}
+
+.formulier input,
+.formulier select,
+.formulier textarea {
+  font: inherit;
+  font-weight: 400;
+  padding: 9px 10px;
+  border: 1px solid var(--leigrijs);
+  border-radius: 4px;
+  background: var(--wit);
+  color: var(--tekst);
+  width: 100%;
+}
+
+.formulier textarea {
+  resize: vertical;
+}
+
+.formulier .vinkje {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 8px;
+  font-weight: 400;
+}
+
+.formulier .vinkje input {
+  width: auto;
+  margin-top: 4px;
+}
+
+.formulier button {
+  align-self: flex-start;
+}
+
+.formulier-fout,
+.formulier-melding {
+  margin: 0;
+  padding: 10px 14px;
+  border-left: 4px solid;
+  border-radius: 2px;
+}
+
+.formulier-fout {
+  background: #f8d7da;
+  border-color: #a4202f;
+  color: #5c0f18;
+}
+
+.formulier-melding {
+  background: var(--lichtgrijs);
+  border-color: var(--oranje);
+}
+
+.uitleg {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.codeveld {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 1.3rem !important;
+  letter-spacing: 0.15em;
+  max-width: 14em;
+}
+
+.lokaas {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.qr {
+  display: block;
+  background: var(--wit);
+  border: 1px solid var(--lichtgrijs);
+  padding: 8px;
+}
+
+.geheim {
+  overflow-wrap: anywhere;
+  background: var(--lichtgrijs);
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
+.herstelcodes ol {
+  display: grid;
+  grid-template-columns: repeat(2, max-content);
+  gap: 6px 32px;
+  padding-left: 1.6em;
+  font-size: 1.1rem;
+}
+
+.herstelcodes h2 {
+  font-size: 1.3rem;
+  color: var(--blauw);
+}
+
+.gegevens {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 8px 20px;
+  margin: 0 0 24px;
+}
+
+.gegevens dt {
+  font-weight: 600;
+}
+
+.gegevens dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.accountkader > form,
+.accountkader > .knoppenrij {
+  margin-top: 20px;
+}
+
+.laden {
+  color: var(--leigrijs);
+}
+
+/* ------------------------------------------------------------------ */
+/* Forum                                                                */
+/* ------------------------------------------------------------------ */
+.forum-kop {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.forum-kop h1 {
+  margin-bottom: 0;
+}
+
+.forum-indeling {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 32px;
+}
+
+.forum h2 {
+  font-size: 1.3rem;
+  color: var(--blauw);
+  margin-bottom: 8px;
+}
+
+.draadlijst {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.draadlijst li {
+  padding: 14px 0;
+  border-bottom: 1px solid var(--lichtgrijs);
+}
+
+.draadlijst h3 {
+  margin: 0;
+  font-family: var(--font-kop);
+  font-size: 1.1rem;
+}
+
+.draadlijst h3 a {
+  color: var(--tekst);
+  text-decoration: none;
+}
+
+.draadlijst h3 a:hover {
+  color: var(--blauw);
+  text-decoration: underline;
+}
+
+.draad-meta,
+.bericht-kop {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  margin: 6px 0 0;
+  color: var(--leigrijs);
+  font-size: 0.875rem;
+}
+
+.label-licht {
+  display: inline-block;
+  padding: 0 7px;
+  border-radius: 3px;
+  background: var(--lichtgrijs);
+  color: var(--tekst);
+  font-size: 0.8rem;
+  border-left: 3px solid var(--oranje);
+}
+
+.onderwerplijst {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.onderwerplijst li {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 0;
+  border-bottom: 1px solid rgb(70 85 96 / 0.25);
+}
+
+.onderwerplijst a {
+  font-weight: 600;
+}
+
+.onderwerplijst span {
+  font-size: 0.875rem;
+  color: var(--leigrijs);
+}
+
+.kruimelpad {
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+  color: var(--leigrijs);
+}
+
+.draad {
+  max-width: 860px;
+}
+
+.draad h1 {
+  font-size: clamp(1.5rem, 3vw, 2.2rem);
+}
+
+.draad > form {
+  margin: 8px 0 16px;
+}
+
+.bericht {
+  padding: 16px 0;
+  border-top: 1px solid var(--lichtgrijs);
+}
+
+.bericht-kop strong {
+  color: var(--tekst);
+}
+
+.bericht-wacht,
+.bericht-verborgen {
+  background: #fff8ec;
+  padding-left: 12px;
+  padding-right: 12px;
+}
+
+.berichttekst p {
+  margin: 12px 0 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.6;
+}
+
+.berichttekst pre {
+  margin: 12px 0 0;
+  padding: 12px 14px;
+  background: #1f2933;
+  color: #e6edf3;
+  border-radius: 4px;
+  overflow-x: auto;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.berichttekst code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.origineel {
+  margin-top: 10px;
+  font-size: 0.95rem;
+}
+
+.origineel summary,
+.bericht-acties summary {
+  cursor: pointer;
+  color: var(--blauw);
+}
+
+.bericht-acties {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 12px;
+  margin-top: 12px;
+  font-size: 0.9rem;
+}
+
+.bericht-acties details[open] {
+  flex-basis: 100%;
+}
+
+.bericht-acties .knop {
+  padding: 6px 12px;
+  font-size: 0.875rem;
+}
+
+.draad .formulier-breed {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 3px solid var(--oranje);
+}
+
+.inlogoproep {
+  margin-top: 24px;
+}
+
+.moderatie section {
+  margin-top: 28px;
+}
+
+.moderatie h2 {
+  font-size: 1.3rem;
+  color: var(--blauw);
+  padding-bottom: 6px;
+  border-bottom: 3px solid var(--oranje);
+}
+
+.moderatie-item {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--lichtgrijs);
+}
+
+.moderatie-lijst {
+  list-style: none;
+  padding: 0;
+}
+
+.moderatie-lijst li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--lichtgrijs);
+  font-size: 0.9rem;
+}
+
+.regels section {
+  margin-top: 24px;
+}
+
+.regels h2 {
+  font-size: 1.3rem;
+  color: var(--blauw);
+}
+
+.regels li {
+  margin-top: 8px;
+  line-height: 1.6;
+}
+
+@media (max-width: 900px) {
+  .forum-indeling {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .kop-rij {
+    flex-wrap: wrap;
+    padding-bottom: 8px;
+  }
+
+  .herstelcodes ol {
+    grid-template-columns: 1fr;
+  }
+}
