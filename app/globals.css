@@ -401,3 +401,56 @@ main.inhoud {
   font-size: 1.05rem;
   line-height: 1.65;
 }
+
+/* Afbeeldingen en video's (beheerpaneel) */
+.kaart-beeld {
+  position: relative;
+  overflow: hidden;
+}
+
+.kaart-beeld img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.kaart-beeld span {
+  position: relative;
+}
+
+.kaart-beeld .speelknop {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: rgb(0 0 0 / 0.6);
+  color: var(--wit);
+  font-size: 1.2rem;
+}
+
+.video,
+.artikel-foto {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  margin: 16px 0;
+  border-radius: 4px;
+}
+
+.artikel-foto {
+  object-fit: cover;
+}
+
+.video iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  border-radius: 4px;
+}

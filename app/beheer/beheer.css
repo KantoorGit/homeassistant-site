@@ -1,0 +1,317 @@
+/* Beheerpaneel, in de huisstijl van de site */
+
+.beheer {
+  background: var(--lichtgrijs);
+}
+
+.beheer-kop {
+  background: var(--blauw);
+}
+
+.beheer-kop-rij {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 56px;
+}
+
+.beheer-kop .logo {
+  color: var(--wit);
+  font-family: var(--font-kop);
+  font-size: 1.25rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.beheer-kop .logo span {
+  color: var(--oranje);
+  font-weight: 400;
+  margin-left: 6px;
+}
+
+.beheer-naar-site {
+  color: var(--wit);
+  font-size: 0.9rem;
+}
+
+.beheer-inhoud {
+  padding-top: 24px;
+  padding-bottom: 64px;
+}
+
+.beheer h1 {
+  font-size: 1.6rem;
+  margin-bottom: 8px;
+}
+
+.beheer-smal {
+  max-width: 440px;
+  margin: 32px auto;
+  background: var(--wit);
+  padding: 24px;
+  border-radius: 6px;
+}
+
+.beheer-laden {
+  color: var(--leigrijs);
+}
+
+.beheer-titelrij {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.beheer-wie {
+  margin: 0;
+  color: var(--leigrijs);
+  font-size: 0.9rem;
+}
+
+.beheer-knoppen {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.terug {
+  margin: 0 0 8px;
+  font-size: 0.9rem;
+}
+
+/* Knoppen */
+.beheer button,
+.knop {
+  display: inline-block;
+  border: 0;
+  border-radius: 4px;
+  padding: 10px 18px;
+  background: var(--oranje);
+  color: var(--tekst);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.beheer button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.beheer button.knop-link,
+.knop-link {
+  background: none;
+  padding: 4px 0;
+  color: var(--blauw);
+  font-weight: 400;
+  text-decoration: underline;
+}
+
+.beheer button.knop-gevaar {
+  background: #b42318;
+  color: var(--wit);
+}
+
+/* Formulieren */
+.formulier {
+  display: grid;
+  gap: 16px;
+  margin: 16px 0;
+}
+
+.formulier label {
+  display: grid;
+  gap: 4px;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.formulier small {
+  font-weight: 400;
+  color: var(--leigrijs);
+}
+
+.formulier input,
+.formulier select,
+.formulier textarea {
+  font: inherit;
+  font-weight: 400;
+  padding: 8px 10px;
+  border: 1px solid #b8bec4;
+  border-radius: 4px;
+  background: var(--wit);
+  width: 100%;
+}
+
+.formulier textarea {
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.formulier input:focus-visible,
+.formulier select:focus-visible,
+.formulier textarea:focus-visible {
+  outline: 3px solid var(--oranje);
+  outline-offset: 1px;
+}
+
+.formulier fieldset {
+  border: 0;
+  margin: 0;
+  padding: 16px;
+  background: var(--wit);
+  border-radius: 6px;
+}
+
+.formulier legend {
+  float: left;
+  width: 100%;
+  margin-bottom: 12px;
+  font-family: var(--font-kop);
+  font-weight: 700;
+  color: var(--blauw);
+}
+
+.velden-rij {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.taalblok {
+  display: grid;
+  gap: 12px;
+}
+
+.taalblok:disabled {
+  opacity: 0.6;
+}
+
+.formulier label.vinkje {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  align-self: end;
+}
+
+.vinkje input {
+  width: auto;
+}
+
+.fout {
+  margin: 0;
+  padding: 10px 12px;
+  border-left: 4px solid #b42318;
+  background: #fef3f2;
+}
+
+.melding {
+  margin: 0 0 16px;
+  padding: 10px 12px;
+  border-left: 4px solid #12805c;
+  background: #ecfdf3;
+}
+
+.qr {
+  width: 200px;
+  height: 200px;
+  background: var(--wit);
+}
+
+.geheim {
+  display: block;
+  margin-top: 6px;
+  word-break: break-all;
+  font-size: 0.9rem;
+}
+
+.stappen {
+  margin: 0;
+  padding-left: 20px;
+}
+
+/* Overzicht */
+.beheer-tabel {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--wit);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.beheer-tabel th,
+.beheer-tabel td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--lichtgrijs);
+  vertical-align: top;
+}
+
+.beheer-tabel th {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--leigrijs);
+}
+
+.etiket {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: var(--oranje);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.etiket.grijs {
+  background: var(--lichtgrijs);
+}
+
+.beheer-tabel .status {
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.status.online {
+  background: #ecfdf3;
+  color: #12805c;
+}
+
+.status.gepland {
+  background: #eef4ff;
+  color: var(--blauw);
+}
+
+.status.concept {
+  background: var(--lichtgrijs);
+  color: var(--leigrijs);
+}
+
+.gevaarzone {
+  margin-top: 32px;
+  padding: 16px;
+  background: var(--wit);
+  border-radius: 6px;
+}
+
+.gevaarzone summary {
+  cursor: pointer;
+  color: #b42318;
+  font-weight: 600;
+}
+
+@media (max-width: 700px) {
+  .beheer-tabel th:nth-child(3),
+  .beheer-tabel td:nth-child(3),
+  .beheer-tabel th:nth-child(5),
+  .beheer-tabel td:nth-child(5) {
+    display: none;
+  }
+}

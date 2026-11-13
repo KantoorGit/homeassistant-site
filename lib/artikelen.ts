@@ -11,6 +11,9 @@ export type Artikel = {
   origineleTaal: Taal;
   auteur: string;
   afbeeldingUrl: string | null;
+  videoUrl: string | null;
+  // Staat groot bovenaan de voorpagina.
+  uitgelicht: boolean;
   isVoorbeeld: boolean;
   taal: Taal;
   slug: string;
@@ -37,14 +40,18 @@ type ArtikelRij = {
   originele_taal: string;
   auteur: string;
   afbeelding_url: string | null;
+  // Komen uit supabase/003_beheer.sql; ontbreken zolang dat niet is uitgevoerd.
+  video_url?: string | null;
+  uitgelicht?: boolean;
   gepubliceerd_op: string;
   is_voorbeeld: boolean;
   artikel_vertalingen: VertalingRij[];
 };
 
+// "*" in plaats van losse kolommen, zodat nieuwe kolommen (zoals
+// 'uitgelicht') de site niet breken als de SQL nog niet is uitgevoerd.
 const kolommen =
-  "id, categorie_id, originele_taal, auteur, afbeelding_url, gepubliceerd_op, is_voorbeeld, " +
-  "artikel_vertalingen(taal, slug, kop, intro, tekst, automatisch_vertaald)";
+  "*, artikel_vertalingen(taal, slug, kop, intro, tekst, automatisch_vertaald)";
 
 function naarArtikel(rij: ArtikelRij, taal: Taal): Artikel | null {
   const vertaling = rij.artikel_vertalingen.find((v) => v.taal === taal);
@@ -60,6 +67,8 @@ function naarArtikel(rij: ArtikelRij, taal: Taal): Artikel | null {
     origineleTaal: isTaal(rij.originele_taal) ? rij.originele_taal : taal,
     auteur: rij.auteur,
     afbeeldingUrl: rij.afbeelding_url,
+    videoUrl: rij.video_url ?? null,
+    uitgelicht: rij.uitgelicht ?? false,
     isVoorbeeld: rij.is_voorbeeld,
     taal,
     slug: vertaling.slug,
