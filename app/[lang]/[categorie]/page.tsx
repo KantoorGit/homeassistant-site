@@ -7,7 +7,8 @@ import { categorieen, isTaal, talen, teksten, vindCategorie } from "@/lib/site";
 export async function generateStaticParams() {
   return talen.flatMap((lang) =>
     categorieen
-      .filter((c) => c.slug[lang] !== "")
+      // Het forum heeft eigen pagina's in app/[lang]/forum.
+      .filter((c) => c.slug[lang] !== "" && c.id !== "forum")
       .map((c) => ({ lang, categorie: c.slug[lang] })),
   );
 }

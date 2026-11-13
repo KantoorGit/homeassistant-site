@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import "@fontsource-variable/roboto";
 import "@fontsource-variable/roboto-slab";
 import "../globals.css";
+import Accountmenu from "@/components/Accountmenu";
 import Categoriebalk from "@/components/Categoriebalk";
 import Taalkiezer from "@/components/Taalkiezer";
 import {
@@ -47,9 +48,14 @@ export default async function RootLayout({
             <Link href={`/${lang}`} className="logo">
               {siteNaam}
             </Link>
-            <Suspense>
-              <Taalkiezer taal={lang} />
-            </Suspense>
+            <div className="kop-rechts">
+              <Suspense>
+                <Taalkiezer taal={lang} />
+              </Suspense>
+              <Suspense>
+                <Accountmenu taal={lang} />
+              </Suspense>
+            </div>
           </div>
         </header>
         <Suspense>

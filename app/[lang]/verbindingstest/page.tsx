@@ -141,6 +141,45 @@ async function controleer(): Promise<Uitkomst[]> {
     });
   }
 
+  // 5. Accounts en forum: tabellen uit 003 en de geheime serversleutel.
+  const forum = await supabase!.from("forum_draden").select("id").limit(1);
+  if (forum.error) {
+    const tabelOntbreekt =
+      forum.error.code === "PGRST205" || forum.error.code === "42P01";
+    uitkomsten.push({
+      status: tabelOntbreekt ? "let-op" : "fout",
+      titel: "Accounts en forum",
+      uitleg: tabelOntbreekt
+        ? "De tabellen voor accounts en forum bestaan nog niet. Voer supabase/004_accounts_en_forum.sql uit in de SQL Editor van Supabase."
+        : "De database gaf een foutmelding bij het lezen van het forum.",
+      detail: `${forum.error.code ?? ""} ${forum.error.message}`.trim(),
+    });
+  } else {
+    uitkomsten.push({
+      status: "goed",
+      titel: "Accounts en forum",
+      uitleg: "De tabellen voor accounts en forum bestaan.",
+    });
+  }
+
+  const geheim =
+    process.env.SUPABASE_SECRET_KEY ?? process.env.SUPABASE_SERVICE_ROLE_KEY;
+  uitkomsten.push(
+    geheim
+      ? {
+          status: "goed",
+          titel: "Geheime serversleutel",
+          uitleg:
+            "De geheime sleutel is aanwezig (nodig voor herstelcodes van 2FA). De waarde wordt nooit getoond.",
+        }
+      : {
+          status: "let-op",
+          titel: "Geheime serversleutel",
+          uitleg:
+            "SUPABASE_SECRET_KEY of SUPABASE_SERVICE_ROLE_KEY ontbreekt. Zonder deze sleutel werken herstelcodes voor 2FA niet.",
+        },
+  );
+
   return uitkomsten;
 }
 
@@ -186,7 +225,7 @@ export default function Verbindingstest() {
   return (
     <div className="test">
       <h1>Verbindingstest</h1>
-      <p>Controleert in vier stappen of de site bij de database kan.</p>
+      <p>Controleert in zes stappen of de site bij de database kan en of accounts en forum klaarstaan.</p>
       <Suspense fallback={<p>Bezig met controleren…</p>}>
         <Uitkomsten />
       </Suspense>
