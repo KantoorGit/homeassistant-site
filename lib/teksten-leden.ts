@@ -208,6 +208,18 @@ const nl = {
     openen: "Discussie heropenen",
     geenToegang: "Deze pagina is alleen voor moderators en beheerders.",
     status: "Status",
+    vertalenNaar: "Ook automatisch vertalen naar",
+    plaatsenEnVertalen: (n: number) => (n === 1 ? "Plaatsen en vertalen naar 1 taal" : `Plaatsen en vertalen naar ${n} talen`),
+    alleenPlaatsenIn: (taal: string) => `Alleen in het ${taal} plaatsen`,
+    vertaalknop: "Vertalen naar andere talen",
+    vertaalStarten: (n: number) => (n === 1 ? "Vertalen naar 1 taal" : `Vertalen naar ${n} talen`),
+    vertaalGestart: "De vertaling staat in de wachtrij en verschijnt vanzelf zodra ze klaar is.",
+    vertaalStatus: (wacht: number, mislukt: number) =>
+      [wacht ? `${wacht} vertaling(en) in de wachtrij` : "", mislukt ? `${mislukt} vertaling(en) mislukt – probeer het opnieuw met de vertaalknop` : ""].filter(Boolean).join(" · "),
+    bewerken: "Bewerken",
+    bewerkenOpslaan: "Wijziging opslaan",
+    bewerktMelding: "Je bericht is gewijzigd. De vertalingen zijn nog van de vorige versie: werk ze bij met \"Vertalen naar andere talen\".",
+    vertalingVerouderd: "Deze vertaling hoort bij een eerdere versie van het bericht.",
   },
 
   forumFouten: {
@@ -421,6 +433,18 @@ const en: Teksten = {
     openen: "Reopen discussion",
     geenToegang: "This page is for moderators and administrators only.",
     status: "Status",
+    vertalenNaar: "Also translate automatically into",
+    plaatsenEnVertalen: (n: number) => (n === 1 ? "Post and translate into 1 language" : `Post and translate into ${n} languages`),
+    alleenPlaatsenIn: (taal: string) => `Post in ${taal} only`,
+    vertaalknop: "Translate into other languages",
+    vertaalStarten: (n: number) => (n === 1 ? "Translate into 1 language" : `Translate into ${n} languages`),
+    vertaalGestart: "The translation is in the queue and will appear automatically once it is ready.",
+    vertaalStatus: (wacht: number, mislukt: number) =>
+      [wacht ? `${wacht} translation(s) in the queue` : "", mislukt ? `${mislukt} translation(s) failed – try again with the translate button` : ""].filter(Boolean).join(" · "),
+    bewerken: "Edit",
+    bewerkenOpslaan: "Save changes",
+    bewerktMelding: "Your post has been changed. The translations are still of the previous version: update them with \"Translate into other languages\".",
+    vertalingVerouderd: "This translation belongs to an earlier version of the post.",
   },
 
   forumFouten: {

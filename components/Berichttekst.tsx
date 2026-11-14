@@ -1,6 +1,8 @@
 // Toont de tekst van een forumbericht. Alles wordt als platte tekst
 // weergegeven (geen HTML uit de invoer), zodat niemand code in de pagina
-// kan smokkelen. Blokken tussen ``` worden als code getoond (W-FOR-07).
+// kan smokkelen. Blokken tussen ``` worden als code getoond, met
+// syntax-kleuring, en nooit vertaald (W-FOR-07).
+import Codekleur from "./Codekleur";
 
 type Deel = { soort: "tekst"; inhoud: string } | { soort: "code"; taal: string; inhoud: string };
 
@@ -28,7 +30,9 @@ export default function Berichttekst({ tekst }: { tekst: string }) {
       {splits(tekst).map((deel, i) =>
         deel.soort === "code" ? (
           <pre key={i} translate="no" data-taal={deel.taal || undefined}>
-            <code>{deel.inhoud}</code>
+            <code>
+              <Codekleur code={deel.inhoud} />
+            </code>
           </pre>
         ) : (
           deel.inhoud

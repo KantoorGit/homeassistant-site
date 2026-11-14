@@ -1074,3 +1074,108 @@ summary:focus-visible {
   padding: 8px 10px;
   vertical-align: top;
 }
+
+/* Schakelaars per taal bij plaatsen en vertalen (W-TAAL-12) */
+.vertaalschakelaars {
+  border: 1px solid var(--lichtgrijs);
+  border-radius: 6px;
+  padding: 10px 14px 12px;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+}
+
+.vertaalschakelaars legend {
+  font-weight: 600;
+  padding: 0 4px;
+}
+
+.schakelaar {
+  display: inline-flex !important;
+  flex-direction: row !important;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-weight: normal;
+}
+
+.schakelaar input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+
+.schakelaar-baan {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  border-radius: 10px;
+  background: #c3c7cc;
+  transition: background 0.15s;
+  flex: none;
+}
+
+.schakelaar-baan::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--wit);
+  transition: transform 0.15s;
+}
+
+.schakelaar-aan .schakelaar-baan {
+  background: var(--blauw);
+}
+
+.schakelaar-aan .schakelaar-baan::after {
+  transform: translateX(16px);
+}
+
+.schakelaar input:focus-visible + .schakelaar-baan {
+  outline: 3px solid var(--oranje);
+  outline-offset: 2px;
+}
+
+.schakelaar-let-op {
+  color: #a8321f;
+}
+
+.vertaalstatus {
+  font-size: 0.85rem;
+  color: var(--leigrijs);
+  margin: 4px 0 0;
+}
+
+/* Syntax-kleuring in codeblokken (W-FOR-07), voor de donkere achtergrond
+   van de codeblokken; elke kleur haalt contrast AA */
+.code-sleutel {
+  color: #8cb4ff;
+}
+
+.code-tekst {
+  color: #a6dc9b;
+}
+
+.code-getal,
+.code-waarde {
+  color: #f6b47a;
+}
+
+.code-opmerking {
+  color: #a3adb8;
+  font-style: italic;
+}
+
+.code-jinja {
+  color: #e0aaf5;
+}
+
+.code-anker {
+  color: #f2d06b;
+}

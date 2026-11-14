@@ -47,6 +47,25 @@ async function vereisSessie(taal: Taal, terug: string) {
   return sessie;
 }
 
+// Talen die de schrijver met de schakelaars heeft aangezet (W-TAAL-12).
+function gekozenTalen(formData: FormData): string[] {
+  return formData
+    .getAll("vertaal")
+    .filter((w): w is string => typeof w === "string" && isPostTaal(w));
+}
+
+// Zet de vertalingen van een bericht in de wachtrij. Mislukt dat, dan staat
+// het bericht er gewoon; de schrijver kan later de vertaalknop gebruiken.
+async function vraagVertaling(
+  supabase: NonNullable<Awaited<ReturnType<typeof maakServerClient>>>,
+  berichtId: number,
+  talen: string[],
+) {
+  if (talen.length === 0) return;
+  const { error } = await supabase.rpc("forum_vertaal", { p_bericht: berichtId, p_talen: talen });
+  if (error) console.error("Vertaling aanvragen mislukt:", error.message);
+}
+
 // ---------------------------------------------------------------------------
 
 export async function nieuweDraad(
@@ -79,6 +98,14 @@ export async function nieuweDraad(
     p_taal: postTaal,
   });
   if (error || typeof id !== "number") return fout(error?.message ?? "");
+
+  const { data: opening } = await supabase
+    .from("forum_berichten")
+    .select("id")
+    .eq("draad_id", id)
+    .eq("is_opening", true)
+    .maybeSingle<{ id: number }>();
+  if (opening) await vraagVertaling(supabase, opening.id, gekozenTalen(formData));
 
   updateTag("forum");
   after(() => telDoel("forum_vraag"));
@@ -114,6 +141,7 @@ export async function reageer(
   if (error || typeof id !== "number") {
     return { fout: forumFout(taal, error?.message), waarden, poging };
   }
+  await vraagVertaling(supabase, id, gekozenTalen(formData));
 
   updateTag("forum");
   refresh();
@@ -247,4 +275,66 @@ export async function draadSluiten(
     p_gesloten: gesloten,
   });
   refresh();
+}
+
+// ---------------------------------------------------------------------------
+// Eigen bericht bewerken (W-FOR-09) en opnieuw laten vertalen (W-TAAL-14)
+// ---------------------------------------------------------------------------
+
+export async function bewerkEigen(
+  taalWaarde: string,
+  berichtId: number,
+  padWaarde: string,
+  vorige: Forumstaat,
+  formData: FormData,
+): Promise<Forumstaat> {
+  const taal = controleerTaal(taalWaarde);
+  const pad = veiligPad(padWaarde, `/${taal}/forum`);
+  const poging = (vorige.poging ?? 0) + 1;
+  await vereisSessie(taal, pad);
+
+  const bericht = schoon(String(formData.get("tekst") ?? "")).trim();
+  const titelVeld = formData.get("titel");
+  const titel = typeof titelVeld === "string" ? schoon(titelVeld).trim() : null;
+  const waarden = { tekst: bericht, titel: titel ?? "" };
+  if (bericht.length < 2 || bericht.length > 20000) {
+    return { fout: forumFout(taal, "TEKST"), waarden, poging };
+  }
+  if (titel !== null && (titel.length < 5 || titel.length > 150)) {
+    return { fout: forumFout(taal, "TITEL"), waarden, poging };
+  }
+
+  const supabase = await maakServerClient();
+  if (!supabase) return { fout: forumFout(taal, ""), waarden, poging };
+  const { error } = await supabase.rpc("forum_bewerk_eigen", {
+    p_bericht: berichtId,
+    p_tekst: bericht,
+    p_titel: titel,
+  });
+  if (error) return { fout: forumFout(taal, error.message), waarden, poging };
+
+  updateTag("forum");
+  redirect(`${pad}?bewerkt=${berichtId}#bericht-${berichtId}`);
+}
+
+export async function vertaalBericht(
+  taalWaarde: string,
+  berichtId: number,
+  padWaarde: string,
+  vorige: Forumstaat,
+  formData: FormData,
+): Promise<Forumstaat> {
+  const taal = controleerTaal(taalWaarde);
+  const pad = veiligPad(padWaarde, `/${taal}/forum`);
+  const poging = (vorige.poging ?? 0) + 1;
+  await vereisSessie(taal, pad);
+
+  const talen = gekozenTalen(formData);
+  if (talen.length === 0) return { poging };
+  const supabase = await maakServerClient();
+  if (!supabase) return { fout: forumFout(taal, ""), poging };
+  const { error } = await supabase.rpc("forum_vertaal", { p_bericht: berichtId, p_talen: talen });
+  if (error) return { fout: forumFout(taal, error.message), poging };
+  refresh();
+  return { melding: ledenTeksten[taal].forum.vertaalGestart, poging };
 }

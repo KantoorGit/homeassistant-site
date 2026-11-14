@@ -3,12 +3,14 @@ import Link from "next/link";
 import { kiesbareCategorieen } from "@/lib/beheer/artikelen";
 import { vereisRedacteur } from "@/lib/beheer/toegang";
 import { talen, teksten } from "@/lib/site";
+import { haalActieveTalen } from "@/lib/talen-instelling";
 import ArtikelFormulier from "../ArtikelFormulier";
 
 export const metadata: Metadata = { title: "Nieuw artikel" };
 
 export default async function NieuwArtikel() {
   const { redacteur } = await vereisRedacteur();
+  const actieveTalen = await haalActieveTalen();
   const eersteTaal = redacteur.talen.includes("nl") ? "nl" : redacteur.talen[0];
 
   return (
@@ -29,9 +31,11 @@ export default async function NieuwArtikel() {
           afbeeldingUrl: "",
           videoUrl: "",
           teksten: {},
+          vertaalinfo: {},
         }}
         categorieen={kiesbareCategorieen.map((c) => ({ id: c.id, naam: c.naam.nl }))}
         talen={[...talen]}
+        actieveTalen={actieveTalen}
         taalNamen={teksten.nl.taalNaam}
         mijnTalen={redacteur.talen}
         opgeslagen={false}

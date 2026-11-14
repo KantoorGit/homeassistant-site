@@ -39,12 +39,19 @@ function onthoud(taal: Taal) {
   document.cookie = `${taalCookie}=${taal}; path=/; max-age=31536000; samesite=lax; secure`;
 }
 
-export default function Taalkiezer({ taal }: { taal: Taal }) {
+export default function Taalkiezer({
+  taal,
+  actieveTalen = talen,
+}: {
+  taal: Taal;
+  // Alleen talen die in het beheerpaneel aan staan (W-TAAL-10).
+  actieveTalen?: readonly Taal[];
+}) {
   const pad = usePathname();
 
   return (
     <nav className="taalkiezer" aria-label={teksten[taal].taalKiezen}>
-      {talen.map((t) => (
+      {talen.filter((t) => actieveTalen.includes(t) || t === taal).map((t) => (
         <Link
           key={t}
           href={padInTaal(pad, taal, t)}
