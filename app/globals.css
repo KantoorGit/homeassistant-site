@@ -476,6 +476,13 @@ main.inhoud {
   object-fit: cover;
 }
 
+.video video {
+  width: 100%;
+  height: 100%;
+  border-radius: 4px;
+  background: #000;
+}
+
 .video iframe {
   width: 100%;
   height: 100%;

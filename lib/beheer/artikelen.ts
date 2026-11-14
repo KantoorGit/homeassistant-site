@@ -1,14 +1,9 @@
 import "server-only";
-import { categorieen, type Taal } from "@/lib/site";
+import { plaatsbaar } from "@/lib/categorieen";
+import type { Categorie, Taal } from "@/lib/site";
 import type { maakSessieClient } from "./supabase-sessie";
 
 type SessieClient = Awaited<ReturnType<typeof maakSessieClient>>;
-
-// Categorieën waaronder je een artikel kunt plaatsen. "Voorpagina" en
-// "Laatste nieuws" vullen zich vanzelf; het forum krijgt eigen berichten.
-export const kiesbareCategorieen = categorieen.filter(
-  (c) => !["voorpagina", "laatste-nieuws", "forum"].includes(c.id),
-);
 
 export type BeheerVertaling = {
   taal: Taal;
@@ -30,15 +25,17 @@ export type BeheerArtikel = {
   status: "concept" | "gepubliceerd";
   gepubliceerd_op: string | null;
   uitgelicht: boolean;
+  // Uit supabase/007_…sql; ontbreekt zolang dat niet is uitgevoerd.
+  positie?: number | null;
   is_voorbeeld: boolean;
   bijgewerkt: string;
   artikel_vertalingen: BeheerVertaling[];
 };
 
+// "*" zodat nieuwe kolommen (zoals 'positie') niets breken zolang de SQL
+// nog niet is uitgevoerd.
 const kolommen =
-  "id, categorie_id, originele_taal, auteur, afbeelding_url, video_url, status, " +
-  "gepubliceerd_op, uitgelicht, is_voorbeeld, bijgewerkt, " +
-  "artikel_vertalingen(taal, slug, kop, intro, tekst, automatisch_vertaald, handmatig_gecorrigeerd)";
+  "*, artikel_vertalingen(taal, slug, kop, intro, tekst, automatisch_vertaald, handmatig_gecorrigeerd)";
 
 export async function alleArtikelen(supabase: SessieClient) {
   const { data, error } = await supabase
@@ -56,14 +53,50 @@ export async function eenArtikel(supabase: SessieClient, id: string) {
     .from("artikelen")
     .select(kolommen)
     .eq("id", id)
-    .maybeSingle()
-    .overrideTypes<BeheerArtikel, { merge: false }>();
+    .maybeSingle<BeheerArtikel>();
   return data ?? null;
 }
 
-export function kopVan(artikel: BeheerArtikel): string {
+// Kop van een artikel, bij voorkeur in de taal van het beheerpaneel.
+export function kopVan(artikel: BeheerArtikel, taal?: Taal, zonderKop = "(zonder kop)"): string {
   const v =
-    artikel.artikel_vertalingen.find((v) => v.taal === artikel.originele_taal) ??
+    (taal && artikel.artikel_vertalingen.find((v) => v.taal === taal)) ||
+    artikel.artikel_vertalingen.find((v) => v.taal === artikel.originele_taal) ||
     artikel.artikel_vertalingen[0];
-  return v?.kop || "(zonder kop)";
+  return v?.kop || zonderKop;
+}
+
+// Plek op de voorpagina (1-7) of null; oude artikelen: 'uitgelicht' = 1.
+export function positieVan(artikel: BeheerArtikel): number | null {
+  if (artikel.positie !== undefined) return artikel.positie;
+  return artikel.uitgelicht ? 1 : null;
+}
+
+// Welk artikel staat nu op welke plek (voor de plekkiezer).
+export function bezettePlekken(
+  artikelen: BeheerArtikel[],
+  taal: Taal,
+  zonderKop: string,
+): Record<number, { id: string; kop: string }> {
+  const plekken: Record<number, { id: string; kop: string }> = {};
+  for (const a of artikelen) {
+    const p = positieVan(a);
+    if (p && !plekken[p]) plekken[p] = { id: a.id, kop: kopVan(a, taal, zonderKop) };
+  }
+  return plekken;
+}
+
+// Keuzes voor het categorieveld: de plaatsbare categorieën, plus de
+// verwijderde categorie van dit artikel zelf (die blijft bewaard, W-ADM-14).
+export function categorieKeuzes(
+  alle: Categorie[],
+  taal: Taal,
+  huidig?: string,
+): { id: string; naam: string; verwijderd?: boolean }[] {
+  const keuzes: { id: string; naam: string; verwijderd?: boolean }[] = plaatsbaar(alle)
+    .filter((c) => !c.verwijderd)
+    .map((c) => ({ id: c.id, naam: c.naam[taal] }));
+  const eigen = alle.find((c) => c.id === huidig);
+  if (eigen?.verwijderd) keuzes.unshift({ id: eigen.id, naam: eigen.naam[taal], verwijderd: true });
+  return keuzes;
 }

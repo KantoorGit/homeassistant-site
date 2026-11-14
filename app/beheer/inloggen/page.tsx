@@ -1,14 +1,19 @@
 import type { Metadata } from "next";
+import { beheerT } from "@/lib/beheer/taal";
 import Inlogformulier from "./Inlogformulier";
 
-export const metadata: Metadata = { title: "Inloggen" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await beheerT();
+  return { title: t.inloggen.titel };
+}
 
-export default function Inlogpagina() {
+export default async function Inlogpagina() {
+  const { t } = await beheerT();
   return (
     <section className="beheer-smal">
-      <h1>Inloggen</h1>
-      <p>Alleen voor de redactie. Daarna vraagt de site een code uit je authenticator-app.</p>
-      <Inlogformulier />
+      <h1>{t.inloggen.titel}</h1>
+      <p>{t.inloggen.uitleg}</p>
+      <Inlogformulier t={t.inloggen} bezigTekst={t.algemeen.bezig} />
     </section>
   );
 }

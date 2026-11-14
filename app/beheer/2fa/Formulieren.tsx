@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState, useTransition } from "react";
+import type { BeheerTeksten } from "@/lib/beheer/teksten";
 import {
   bevestig2fa,
   controleer2fa,
@@ -8,10 +9,12 @@ import {
   type Koppeling,
 } from "../acties";
 
-function Codeveld() {
+type T = BeheerTeksten["tweefa"];
+
+function Codeveld({ t }: { t: T }) {
   return (
     <label>
-      Code uit de app
+      {t.codeLabel}
       <input
         name="code"
         inputMode="numeric"
@@ -25,20 +28,20 @@ function Codeveld() {
   );
 }
 
-export function Codeformulier() {
+export function Codeformulier({ t, bezigTekst }: { t: T; bezigTekst: string }) {
   const [staat, actie, bezig] = useActionState(controleer2fa, undefined);
   return (
     <form action={actie} className="formulier">
-      <Codeveld />
+      <Codeveld t={t} />
       {staat?.fout && <p className="fout" role="alert">{staat.fout}</p>}
       <button type="submit" disabled={bezig}>
-        {bezig ? "Bezig…" : "Bevestigen"}
+        {bezig ? bezigTekst : t.bevestigen}
       </button>
     </form>
   );
 }
 
-export function Koppelen() {
+export function Koppelen({ t, bezigTekst }: { t: T; bezigTekst: string }) {
   const [koppeling, zetKoppeling] = useState<Koppeling | null>(null);
   const [bezigMetStart, start] = useTransition();
   const [staat, actie, bezig] = useActionState(bevestig2fa, undefined);
@@ -54,7 +57,7 @@ export function Koppelen() {
           disabled={bezigMetStart}
           onClick={() => start(async () => zetKoppeling(await start2fa()))}
         >
-          {bezigMetStart ? "Bezig…" : "Authenticator-app koppelen"}
+          {bezigMetStart ? bezigTekst : t.koppelen}
         </button>
       </div>
     );
@@ -63,21 +66,21 @@ export function Koppelen() {
   return (
     <form action={actie} className="formulier">
       <ol className="stappen">
-        <li>Open je authenticator-app en kies ‘account toevoegen’.</li>
-        <li>Scan deze QR-code.</li>
+        <li>{t.stap1}</li>
+        <li>{t.stap2}</li>
       </ol>
       {/* De QR-code komt als afbeelding (SVG) van Supabase. */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={koppeling.qr} alt="QR-code voor je authenticator-app" className="qr" />
+      <img src={koppeling.qr} alt={t.qrAlt} className="qr" />
       <details>
-        <summary>Lukt scannen niet? Typ dan deze sleutel over</summary>
+        <summary>{t.nietScannen}</summary>
         <code className="geheim">{koppeling.geheim}</code>
       </details>
       <input type="hidden" name="factorId" value={koppeling.factorId} />
-      <Codeveld />
+      <Codeveld t={t} />
       {staat?.fout && <p className="fout" role="alert">{staat.fout}</p>}
       <button type="submit" disabled={bezig}>
-        {bezig ? "Bezig…" : "Koppeling bevestigen"}
+        {bezig ? bezigTekst : t.koppelingBevestigen}
       </button>
     </form>
   );

@@ -7,9 +7,8 @@ import {
   getArtikel,
   getArtikelen,
 } from "@/lib/artikelen";
-import { youtubeId } from "@/lib/beheer/hulp";
+import { videoInfo } from "@/lib/video";
 import {
-  categorieen,
   categoriePad,
   isTaal,
   nietVertaaldZin,
@@ -26,8 +25,8 @@ export async function generateStaticParams() {
   const paden = [];
   for (const lang of talen) {
     for (const artikel of await getArtikelen(lang)) {
-      const categorie = categorieen.find((c) => c.id === artikel.categorieId);
-      if (categorie?.slug[lang]) {
+      const categorie = artikel.categorie;
+      if (categorie.slug[lang]) {
         paden.push({
           lang,
           categorie: categorie.slug[lang],
@@ -77,8 +76,8 @@ export default async function Artikelpagina({ params }: Props) {
   if (pad !== `/${lang}/${categorieSlug}/${slug}`) redirect(pad);
 
   const t = teksten[lang];
-  const video = youtubeId(artikel.videoUrl);
-  const categorie = categorieen.find((c) => c.id === artikel.categorieId)!;
+  const video = videoInfo(artikel.videoUrl);
+  const categorie = artikel.categorie;
   const isVertaling = artikel.origineleTaal !== lang && !artikel.nietVertaald;
   const origineel = isVertaling
     ? artikelPad(artikel, artikel.origineleTaal)
@@ -87,7 +86,7 @@ export default async function Artikelpagina({ params }: Props) {
   return (
     <article
       data-meting-artikel={artikel.id}
-      data-meting-categorie={artikel.categorieId}
+      data-meting-categorie={categorie.id}
       className="artikel"
       lang={artikel.nietVertaald ? taalCode[artikel.tekstTaal] : undefined}
     >
@@ -118,13 +117,24 @@ export default async function Artikelpagina({ params }: Props) {
         </p>
       )}
 
-      {video ? (
+      {video?.soort === "bestand" ? (
+        <div className="video">
+          <video
+            src={video.bestand}
+            controls
+            preload="metadata"
+            playsInline
+            poster={artikel.afbeeldingUrl ?? undefined}
+            data-meting-video={video.id}
+          />
+        </div>
+      ) : video ? (
         <div className="video">
           <iframe
-            src={`https://www.youtube-nocookie.com/embed/${video}?enablejsapi=1`}
-            data-meting-video={video}
+            src={video.insluiten}
+            data-meting-video={video.soort === "youtube" ? video.id : undefined}
             title={artikel.kop}
-            allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
             allowFullScreen
             loading="lazy"
           />

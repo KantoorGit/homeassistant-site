@@ -12,63 +12,101 @@ import {
   type Rapport,
   type Rij,
 } from "@/lib/beheer/statistieken";
+import { beheerT } from "@/lib/beheer/taal";
+import { landcode, vul, type BeheerTeksten } from "@/lib/beheer/teksten";
 import { vereisBeheerder } from "@/lib/beheer/toegang";
-import { categorieen, talen, teksten } from "@/lib/site";
+import { haalAlleCategorieen } from "@/lib/categorieen";
+import { talen, teksten, type Categorie, type Taal } from "@/lib/site";
 import { Dagstaafjes, Tabel, Tegel } from "./onderdelen";
-import { doelNamen, secties } from "./secties";
+import { maakSecties, vertaalWaarde } from "./secties";
 
-export const metadata: Metadata = { title: "Statistieken" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await beheerT();
+  return { title: t.overzicht.statistieken };
+}
+
+type Ctx = { t: BeheerTeksten; taal: Taal; f: Filters };
+
+// Namen van tabbladen en perioden in de taal van het beheerpaneel.
+function tabNaam(t: BeheerTeksten, id: string): string {
+  const s = t.stat;
+  return (
+    {
+      overzicht: s.tabOverzicht,
+      realtime: s.tabRealtime,
+      acquisitie: s.tabAcquisitie,
+      doelgroep: s.tabDoelgroep,
+      gedrag: s.tabGedrag,
+      doelen: s.tabDoelen,
+    } as Record<string, string>
+  )[id] ?? id;
+}
+
+function periodeNaam(t: BeheerTeksten, id: string): string {
+  const s = t.stat;
+  return (
+    { vandaag: s.periodeVandaag, "7": s.periode7, "28": s.periode28, "90": s.periode90, "365": s.periode365 } as Record<
+      string,
+      string
+    >
+  )[id] ?? id;
+}
+
+// Kanalen zoals ze in de database staan (filterwaarden blijven Nederlands).
+const kanalen = ["Direct", "Organisch zoeken", "Verwijzing", "Social", "E-mail", "Campagne", "Intern"];
 
 // Bezoekersstatistieken, alleen voor de beheerder met 2FA (W-ANA-50 t/m -54).
 export default async function Statistieken({ searchParams }: PageProps<"/beheer/statistieken">) {
   const { supabase } = await vereisBeheerder();
+  const { taal, t } = await beheerT();
   const f = leesFilters(await searchParams);
+  const ctx: Ctx = { t, taal, f };
 
-  const { rapport, fout } =
-    f.tab === "realtime" ? await haalRealtime(supabase, f.alles) : await haalRapport(supabase, f);
+  const [{ rapport, fout }, categorieen] = await Promise.all([
+    f.tab === "realtime" ? haalRealtime(supabase, f.alles) : haalRapport(supabase, f),
+    haalAlleCategorieen(),
+  ]);
 
   return (
     <section className="statistieken">
       <p className="terug">
-        <Link href="/beheer">← Beheer</Link>
+        <Link href="/beheer">{t.algemeen.terugBeheer}</Link>
       </p>
       <div className="beheer-titelrij">
-        <h1>Bezoekersstatistieken</h1>
+        <h1>{t.stat.titel}</h1>
       </div>
 
-      <nav className="stat-tabs" aria-label="Rapporten">
-        {tabs.map((t) => (
+      <nav className="stat-tabs" aria-label={t.stat.rapporten}>
+        {tabs.map((tab) => (
           <Link
-            key={t.id}
-            href={`/beheer/statistieken?${zoekdeel({ ...f, tab: t.id })}`}
-            aria-current={t.id === f.tab ? "page" : undefined}
+            key={tab.id}
+            href={`/beheer/statistieken?${zoekdeel({ ...f, tab: tab.id })}`}
+            aria-current={tab.id === f.tab ? "page" : undefined}
           >
-            {t.naam}
+            {tabNaam(t, tab.id)}
           </Link>
         ))}
       </nav>
 
-      <Filterbalk f={f} />
+      <Filterbalk ctx={ctx} categorieen={categorieen} />
 
       {fout && (
         <p className="fout">
-          {/meting_|does not exist|schema cache/i.test(fout)
-            ? "De statistieken zijn nog niet klaar: voer eerst supabase/005_bezoekersstatistieken.sql uit in Supabase."
-            : `Ophalen mislukt: ${fout}`}
+          {/meting_|does not exist|schema cache/i.test(fout) ? t.stat.nietKlaar : vul(t.stat.ophalenMislukt, { fout })}
         </p>
       )}
 
-      {rapport && f.tab === "realtime" && <Realtime r={rapport} />}
-      {rapport && f.tab === "overzicht" && <Overzicht r={rapport} f={f} />}
+      {rapport && f.tab === "realtime" && <Realtime r={rapport} ctx={ctx} />}
+      {rapport && f.tab === "overzicht" && <Overzicht r={rapport} ctx={ctx} />}
       {rapport && f.tab === "acquisitie" && (
-        <Blokken r={rapport} f={f} namen={["kanalen", "verwijzers", "zoekmachines", "campagnes"]} />
+        <Blokken r={rapport} ctx={ctx} namen={["kanalen", "verwijzers", "zoekmachines", "campagnes"]} />
       )}
       {rapport && f.tab === "doelgroep" && (
         <>
-          <ToestemmingUitleg r={rapport} />
+          <ToestemmingUitleg r={rapport} ctx={ctx} />
           <Blokken
             r={rapport}
-            f={f}
+            ctx={ctx}
             namen={[
               "landen",
               "regios",
@@ -86,31 +124,35 @@ export default async function Statistieken({ searchParams }: PageProps<"/beheer/
         </>
       )}
       {rapport && f.tab === "gedrag" && (
-        <Gedrag r={rapport} f={f} koppen={await artikelKoppen(supabase)} />
+        <Gedrag r={rapport} ctx={ctx} koppen={await artikelKoppen(supabase, taal, t)} categorieen={categorieen} />
       )}
-      {rapport && f.tab === "doelen" && <Doelen r={rapport} f={f} />}
+      {rapport && f.tab === "doelen" && <Doelen r={rapport} ctx={ctx} />}
     </section>
   );
 }
 
 async function artikelKoppen(
   supabase: Awaited<ReturnType<typeof vereisBeheerder>>["supabase"],
+  taal: Taal,
+  t: BeheerTeksten,
 ): Promise<Map<string, string>> {
   const { artikelen } = await alleArtikelen(supabase);
-  return new Map(artikelen.map((a) => [a.id, kopVan(a)]));
+  return new Map(artikelen.map((a) => [a.id, kopVan(a, taal, t.overzicht.zonderKop)]));
 }
 
-function Filterbalk({ f }: { f: Filters }) {
+function Filterbalk({ ctx, categorieen }: { ctx: Ctx; categorieen: Categorie[] }) {
+  const { t, taal, f } = ctx;
+  const s = t.stat;
   return (
     <form className="stat-filters" method="get" action="/beheer/statistieken">
       <input type="hidden" name="tab" value={f.tab} />
       {f.tab !== "realtime" && (
         <label>
-          Periode
+          {s.periode}
           <select name="periode" defaultValue={f.periode}>
             {perioden.map((p) => (
               <option key={p.id} value={p.id}>
-                {p.naam}
+                {periodeNaam(t, p.id)}
               </option>
             ))}
           </select>
@@ -119,61 +161,61 @@ function Filterbalk({ f }: { f: Filters }) {
       {f.tab !== "realtime" && (
         <>
           <label>
-            Taal
+            {s.taal}
             <select name="taal" defaultValue={f.taal}>
-              <option value="">Alle</option>
-              {talen.map((t) => (
-                <option key={t} value={t}>
-                  {teksten.nl.taalNaam[t]}
+              <option value="">{t.algemeen.alle}</option>
+              {talen.map((x) => (
+                <option key={x} value={x}>
+                  {teksten[taal].taalNaam[x]}
                 </option>
               ))}
             </select>
           </label>
           <label>
-            Categorie
+            {s.categorie}
             <select name="categorie" defaultValue={f.categorie}>
-              <option value="">Alle</option>
+              <option value="">{t.algemeen.alle}</option>
               {categorieen
-                .filter((c) => c.id !== "voorpagina" && c.id !== "laatste-nieuws")
+                .filter((c) => c.soort !== "voorpagina" && c.soort !== "laatste-nieuws")
                 .map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.naam.nl}
+                    {c.naam[taal]}
                   </option>
                 ))}
             </select>
           </label>
           <label>
-            Apparaat
+            {s.apparaat}
             <select name="apparaat" defaultValue={f.apparaat}>
-              <option value="">Alle</option>
-              <option value="computer">Computer</option>
-              <option value="tablet">Tablet</option>
-              <option value="telefoon">Telefoon</option>
+              <option value="">{t.algemeen.alle}</option>
+              <option value="computer">{t.waarde.computer}</option>
+              <option value="tablet">{t.waarde.tablet}</option>
+              <option value="telefoon">{t.waarde.telefoon}</option>
             </select>
           </label>
           <label>
-            Kanaal
+            {s.kanaal}
             <select name="kanaal" defaultValue={f.kanaal}>
-              <option value="">Alle</option>
-              {["Direct", "Organisch zoeken", "Verwijzing", "Social", "E-mail", "Campagne", "Intern"].map((k) => (
+              <option value="">{t.algemeen.alle}</option>
+              {kanalen.map((k) => (
                 <option key={k} value={k}>
-                  {k}
+                  {String(vertaalWaarde(t, k))}
                 </option>
               ))}
             </select>
           </label>
           <label>
-            Land
-            <input name="land" defaultValue={f.land} placeholder="bijv. NL" size={4} maxLength={2} />
+            {s.land}
+            <input name="land" defaultValue={f.land} placeholder={s.landVoorbeeld} size={4} maxLength={2} />
           </label>
         </>
       )}
       <label className="stat-vinkje">
         <input type="checkbox" name="alles" value="1" defaultChecked={f.alles} />
-        Ook redactie en testomgeving
+        {s.ookRedactie}
       </label>
       <button type="submit" className="knop">
-        Toon
+        {s.toon}
       </button>
     </form>
   );
@@ -183,11 +225,30 @@ function csvAdres(f: Filters, sectie: string): string {
   return `/beheer/statistieken/csv?${zoekdeel(f, { sectie })}`;
 }
 
-function Blokken({ r, f, namen, rijen }: { r: Rapport; f: Filters; namen: string[]; rijen?: Record<string, Rij[]> }) {
+// Tabellen waarvan de namen uit de database vertaald worden.
+const metVertaaldeNamen = new Set(["kanalen", "apparaten", "nieuw_terugkerend"]);
+
+function Blokken({
+  r,
+  ctx,
+  namen,
+  rijen,
+}: {
+  r: Rapport;
+  ctx: Ctx;
+  namen: string[];
+  rijen?: Record<string, Rij[]>;
+}) {
+  const { t, taal, f } = ctx;
+  const secties = maakSecties(t);
   return (
     <div className="stat-raster">
       {namen.map((n) => {
         const s = secties[n];
+        let lijst = rijen?.[n] ?? (r[n] as Rij[] | undefined);
+        if (lijst && metVertaaldeNamen.has(n)) {
+          lijst = lijst.map((rij) => ({ ...rij, naam: vertaalWaarde(t, rij.naam) }));
+        }
         return (
           <Tabel
             key={n}
@@ -195,8 +256,10 @@ function Blokken({ r, f, namen, rijen }: { r: Rapport; f: Filters; namen: string
             kolommen={s.kolommen}
             uitleg={s.uitleg}
             alleenToestemming={s.alleenToestemming}
-            rijen={rijen?.[n] ?? (r[n] as Rij[] | undefined)}
+            rijen={lijst}
             csv={csvAdres(f, n)}
+            t={t.stat}
+            taal={taal}
           />
         );
       })}
@@ -204,52 +267,76 @@ function Blokken({ r, f, namen, rijen }: { r: Rapport; f: Filters; namen: string
   );
 }
 
-function ToestemmingUitleg({ r }: { r: Rapport }) {
+function ToestemmingUitleg({ r, ctx }: { r: Rapport; ctx: Ctx }) {
+  const s = ctx.t.stat;
   const pct = Number(r.overzicht?.uitgebreid_pct ?? 0);
   return (
     <p className="stat-toestemming">
-      <strong>{pct}%</strong> van de sessies is van bezoekers die toestemming gaven. Cijfers met het
-      etiket <span className="etiket etiket-toestemming">alleen met toestemming</span> gaan alleen over
-      die groep en zeggen niets over alle bezoekers (W-ANA-54). &ldquo;Bezoekers&rdquo; zonder
-      toestemming worden per dag geteld: wie op twee dagen komt, telt twee keer.
+      <strong>{new Intl.NumberFormat(landcode[ctx.taal]).format(pct)}%</strong> {s.toestemming1}{" "}
+      <span className="etiket etiket-toestemming">{s.etiketToestemming}</span> {s.toestemming2}
     </p>
   );
 }
 
-function Overzicht({ r, f }: { r: Rapport; f: Filters }) {
+function Overzicht({ r, ctx }: { r: Rapport; ctx: Ctx }) {
+  const { t, taal } = ctx;
+  const s = t.stat;
   const o = r.overzicht ?? {};
   const v = r.vorige ?? {};
   const n = (x: unknown) => Number(x ?? 0);
+  const tegel = { t: s, taal };
   return (
     <>
       <div className="stat-tegels">
-        <Tegel titel="Bezoekers" waarde={n(o.bezoekers)} vorig={n(v.bezoekers)} />
-        <Tegel titel="Sessies" waarde={n(o.sessies)} vorig={n(v.sessies)} />
-        <Tegel titel="Paginaweergaven" waarde={n(o.paginaweergaven)} vorig={n(v.paginaweergaven)} />
-        <Tegel titel="Gem. actieve tijd per sessie" waarde={n(o.gem_actieve_ms)} vorig={n(v.gem_actieve_ms)} soort="ms" />
-        <Tegel titel="Sessies met één pagina" waarde={n(o.een_pagina_pct)} vorig={n(v.een_pagina_pct)} soort="pct" lagerIsBeter />
+        <Tegel titel={s.bezoekers} waarde={n(o.bezoekers)} vorig={n(v.bezoekers)} {...tegel} />
+        <Tegel titel={s.sessies} waarde={n(o.sessies)} vorig={n(v.sessies)} {...tegel} />
+        <Tegel titel={s.paginaweergaven} waarde={n(o.paginaweergaven)} vorig={n(v.paginaweergaven)} {...tegel} />
+        <Tegel titel={s.gemTijd} waarde={n(o.gem_actieve_ms)} vorig={n(v.gem_actieve_ms)} soort="ms" {...tegel} />
+        <Tegel
+          titel={s.eenPagina}
+          waarde={n(o.een_pagina_pct)}
+          vorig={n(v.een_pagina_pct)}
+          soort="pct"
+          lagerIsBeter
+          {...tegel}
+        />
       </div>
-      <ToestemmingUitleg r={r} />
-      <Dagstaafjes rijen={(r.per_dag as Rij[]) ?? []} sleutel="sessies" titel="Sessies per dag" />
+      <ToestemmingUitleg r={r} ctx={ctx} />
+      <Dagstaafjes rijen={(r.per_dag as Rij[]) ?? []} sleutel="sessies" titel={s.sessiesPerDag} t={s} taal={taal} />
       <details className="stat-tabelweergave">
-        <summary>Cijfers per dag als tabel</summary>
-        <Blokken r={r} f={f} namen={["per_dag"]} />
+        <summary>{s.cijfersTabel}</summary>
+        <Blokken r={r} ctx={ctx} namen={["per_dag"]} />
       </details>
-      <Blokken r={r} f={f} namen={["kanalen", "paginas", "landen", "apparaten"]} />
+      <Blokken r={r} ctx={ctx} namen={["kanalen", "paginas", "landen", "apparaten"]} />
     </>
   );
 }
 
-function Gedrag({ r, f, koppen }: { r: Rapport; f: Filters; koppen: Map<string, string> }) {
+function Gedrag({
+  r,
+  ctx,
+  koppen,
+  categorieen,
+}: {
+  r: Rapport;
+  ctx: Ctx;
+  koppen: Map<string, string>;
+  categorieen: Categorie[];
+}) {
   const artikelen = ((r.artikelen as Rij[]) ?? []).map((a) => ({
     ...a,
     kop: koppen.get(String(a.id)) ?? String(a.pad ?? a.id),
   }));
+  // Categorie-id's uit de meting als naam in de taal van het beheerpaneel.
+  const categorieRijen = ((r.categorieen as Rij[]) ?? []).map((c) => ({
+    ...c,
+    naam: categorieen.find((x) => x.id === c.naam)?.naam[ctx.taal] ?? c.naam,
+  }));
   return (
     <Blokken
       r={r}
-      f={f}
-      rijen={{ artikelen }}
+      ctx={ctx}
+      rijen={{ artikelen, categorieen: categorieRijen }}
       namen={[
         "paginas",
         "artikelen",
@@ -269,83 +356,89 @@ function Gedrag({ r, f, koppen }: { r: Rapport; f: Filters; koppen: Map<string, 
   );
 }
 
-function Doelen({ r, f }: { r: Rapport; f: Filters }) {
-  const t = r.trechter ?? {};
+function Doelen({ r, ctx }: { r: Rapport; ctx: Ctx }) {
+  const { t } = ctx;
+  const s = t.stat;
+  const tr = r.trechter ?? {};
   const stappen = [
-    { naam: "Registratiepagina bekeken", aantal: Number(t.registratie_bekeken ?? 0) },
-    { naam: "Account aangemaakt", aantal: Number(t.registratie_voltooid ?? 0) },
-    { naam: "Authenticator-app gekoppeld", aantal: Number(t.tweefactor_gekoppeld ?? 0) },
-    { naam: "Eerste forumbericht", aantal: Number(t.eerste_bericht ?? 0) },
+    { naam: s.trechterBekeken, aantal: Number(tr.registratie_bekeken ?? 0) },
+    { naam: s.trechterAccount, aantal: Number(tr.registratie_voltooid ?? 0) },
+    { naam: s.trechter2fa, aantal: Number(tr.tweefactor_gekoppeld ?? 0) },
+    { naam: s.trechterBericht, aantal: Number(tr.eerste_bericht ?? 0) },
   ];
   const max = Math.max(stappen[0].aantal, 1);
   const doelen = ((r.doelen as Rij[]) ?? []).map((d) => ({
     ...d,
-    naam: doelNamen[String(d.naam)] ?? d.naam,
+    naam: (t.doel as Record<string, string>)[String(d.naam)] ?? d.naam,
   }));
   return (
     <>
       <section className="stat-blok">
-        <h2>Trechter van registratie (sessies)</h2>
+        <h2>{s.trechter}</h2>
         <ol className="stat-trechter">
-          {stappen.map((s) => (
-            <li key={s.naam}>
-              <span className="stat-trechter-naam">{s.naam}</span>
+          {stappen.map((st) => (
+            <li key={st.naam}>
+              <span className="stat-trechter-naam">{st.naam}</span>
               <span className="stat-balk-cel">
-                <span className="stat-balk" style={{ width: `${Math.round((s.aantal / max) * 100)}%` }} />
-                <span>{s.aantal}</span>
+                <span className="stat-balk" style={{ width: `${Math.round((st.aantal / max) * 100)}%` }} />
+                <span>{st.aantal}</span>
               </span>
             </li>
           ))}
         </ol>
       </section>
-      <Blokken r={r} f={f} rijen={{ doelen }} namen={["doelen", "taalwissels"]} />
+      <Blokken r={r} ctx={ctx} rijen={{ doelen }} namen={["doelen", "taalwissels"]} />
     </>
   );
 }
 
-function Realtime({ r }: { r: Rapport }) {
+function Realtime({ r, ctx }: { r: Rapport; ctx: Ctx }) {
+  const { t, taal } = ctx;
+  const s = t.stat;
+  const k = t.kol;
   const gebeurtenissen = ((r.gebeurtenissen as Rij[]) ?? []).map((g) => ({
     ...g,
-    tijd: new Date(String(g.tijd)).toLocaleTimeString("nl-NL", { timeZone: "Europe/Amsterdam" }),
+    tijd: new Date(String(g.tijd)).toLocaleTimeString(landcode[taal], { timeZone: "Europe/Amsterdam" }),
   }));
+  const tegel = { t: s, taal };
   return (
     <>
-      <p className="stat-uitleg">
-        Laatste 30 minuten. Ververs de pagina voor nieuwe cijfers. Metingen komen binnen ongeveer 10
-        seconden binnen.
-      </p>
+      <p className="stat-uitleg">{s.realtimeUitleg}</p>
       <div className="stat-tegels">
-        <Tegel titel="Actief (laatste 5 min.)" waarde={Number(r.actief ?? 0)} />
-        <Tegel titel="Sessies" waarde={Number(r.sessies ?? 0)} />
-        <Tegel titel="Paginaweergaven" waarde={Number(r.paginaweergaven ?? 0)} />
+        <Tegel titel={s.actief5} waarde={Number(r.actief ?? 0)} {...tegel} />
+        <Tegel titel={s.sessies} waarde={Number(r.sessies ?? 0)} {...tegel} />
+        <Tegel titel={s.paginaweergaven} waarde={Number(r.paginaweergaven ?? 0)} {...tegel} />
       </div>
       <div className="stat-raster">
         <Tabel
-          titel="Pagina's"
+          titel={t.sectie.realtimePaginas}
           rijen={r.paginas as Rij[]}
           kolommen={[
-            { sleutel: "naam", label: "Pagina" },
-            { sleutel: "weergaven", label: "Weergaven", soort: "getal" },
+            { sleutel: "naam", label: k.pagina },
+            { sleutel: "weergaven", label: k.weergaven, soort: "getal" },
           ]}
+          {...tegel}
         />
         <Tabel
-          titel="Landen"
+          titel={t.sectie.realtimeLanden}
           rijen={r.landen as Rij[]}
           kolommen={[
-            { sleutel: "naam", label: "Land" },
-            { sleutel: "sessies", label: "Sessies", soort: "getal" },
+            { sleutel: "naam", label: k.land },
+            { sleutel: "sessies", label: k.sessies, soort: "getal" },
           ]}
+          {...tegel}
         />
         <Tabel
-          titel="Laatste gebeurtenissen"
+          titel={s.laatsteGebeurtenissen}
           rijen={gebeurtenissen}
           kolommen={[
-            { sleutel: "tijd", label: "Tijd" },
-            { sleutel: "type", label: "Soort" },
-            { sleutel: "pad", label: "Pagina" },
-            { sleutel: "plek", label: "Plek" },
-            { sleutel: "naam", label: "Details" },
+            { sleutel: "tijd", label: k.tijd },
+            { sleutel: "type", label: k.soort },
+            { sleutel: "pad", label: k.pagina },
+            { sleutel: "plek", label: k.plek },
+            { sleutel: "naam", label: k.details },
           ]}
+          {...tegel}
         />
       </div>
     </>

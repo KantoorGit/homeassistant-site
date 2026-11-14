@@ -1,10 +1,22 @@
 import Link from "next/link";
 import type { Rij } from "@/lib/beheer/statistieken";
+import { landcode, type BeheerTeksten } from "@/lib/beheer/teksten";
+import type { Taal } from "@/lib/site";
 
 // Bouwstenen van het statistiekendashboard: tegels, staafjes per dag en
-// tabellen met CSV-download.
+// tabellen met CSV-download, in de taal van het beheerpaneel.
 
-const getal = new Intl.NumberFormat("nl-NL");
+type StatT = BeheerTeksten["stat"];
+
+const getallen = new Map<Taal, Intl.NumberFormat>();
+function getalOpmaak(taal: Taal): Intl.NumberFormat {
+  let f = getallen.get(taal);
+  if (!f) {
+    f = new Intl.NumberFormat(landcode[taal]);
+    getallen.set(taal, f);
+  }
+  return f;
+}
 
 export function duur(ms: number | null | undefined): string {
   const s = Math.round((ms ?? 0) / 1000);
@@ -15,7 +27,8 @@ export function duur(ms: number | null | undefined): string {
 
 export type Soort = "tekst" | "getal" | "ms" | "pct" | "seconden";
 
-export function opmaak(waarde: unknown, soort: Soort): string {
+export function opmaak(waarde: unknown, soort: Soort, taal: Taal = "nl"): string {
+  const getal = getalOpmaak(taal);
   if (waarde === null || waarde === undefined || waarde === "") return "–";
   switch (soort) {
     case "getal":
@@ -31,8 +44,8 @@ export function opmaak(waarde: unknown, soort: Soort): string {
   }
 }
 
-function verschil(nu: number, vorig: number): { tekst: string; richting: "op" | "neer" | "gelijk" } {
-  if (!vorig) return { tekst: nu ? "nieuw" : "–", richting: "gelijk" };
+function verschil(nu: number, vorig: number, nieuw: string): { tekst: string; richting: "op" | "neer" | "gelijk" } {
+  if (!vorig) return { tekst: nu ? nieuw : "–", richting: "gelijk" };
   const pct = Math.round(((nu - vorig) / vorig) * 100);
   return {
     tekst: `${pct > 0 ? "+" : ""}${pct}%`,
@@ -46,23 +59,27 @@ export function Tegel({
   vorig,
   soort = "getal",
   lagerIsBeter = false,
+  t,
+  taal,
 }: {
   titel: string;
   waarde: number;
   vorig?: number;
   soort?: Soort;
   lagerIsBeter?: boolean;
+  t: StatT;
+  taal: Taal;
 }) {
-  const v = vorig === undefined ? null : verschil(waarde, vorig);
+  const v = vorig === undefined ? null : verschil(waarde, vorig, t.nieuw);
   const goed = v && v.richting !== "gelijk" && (v.richting === "op") !== lagerIsBeter;
   return (
     <div className="stat-tegel">
       <p className="stat-titel">{titel}</p>
-      <p className="stat-waarde">{opmaak(waarde, soort)}</p>
+      <p className="stat-waarde">{opmaak(waarde, soort, taal)}</p>
       {v && (
         <p className={`stat-verschil ${v.richting === "gelijk" ? "" : goed ? "goed" : "minder"}`}>
           {v.richting === "op" ? "▲ " : v.richting === "neer" ? "▼ " : ""}
-          {v.tekst} <span>t.o.v. vorige periode</span>
+          {v.tekst} <span>{t.tovVorige}</span>
         </p>
       )}
     </div>
@@ -75,12 +92,17 @@ export function Dagstaafjes({
   rijen,
   sleutel,
   titel,
+  t,
+  taal,
 }: {
   rijen: Rij[];
   sleutel: string;
   titel: string;
+  t: StatT;
+  taal: Taal;
 }) {
-  if (rijen.length === 0) return <p className="stat-leeg">Nog geen gegevens in deze periode.</p>;
+  const getal = getalOpmaak(taal);
+  if (rijen.length === 0) return <p className="stat-leeg">{t.leeg}</p>;
   const hoogte = 160;
   const breedteVak = Math.max(8, Math.min(32, Math.floor(720 / rijen.length)));
   const staaf = Math.min(24, Math.max(4, breedteVak - 2));
@@ -90,7 +112,7 @@ export function Dagstaafjes({
   const lijnen = [0, top / 2, top];
   const breedte = rijen.length * breedteVak + 40;
   const datum = (d: unknown) =>
-    new Date(`${d}T12:00:00Z`).toLocaleDateString("nl-NL", { day: "numeric", month: "short" });
+    new Date(`${d}T12:00:00Z`).toLocaleDateString(landcode[taal], { day: "numeric", month: "short" });
 
   return (
     <figure className="stat-grafiek">
@@ -151,6 +173,8 @@ export function Tabel({
   csv,
   uitleg,
   alleenToestemming = false,
+  t,
+  taal,
 }: {
   titel: string;
   rijen: Rij[] | undefined;
@@ -158,6 +182,8 @@ export function Tabel({
   csv?: string;
   uitleg?: string;
   alleenToestemming?: boolean;
+  t: StatT;
+  taal: Taal;
 }) {
   const lijst = rijen ?? [];
   const eersteGetal = kolommen.find((k) => k.soort === "getal");
@@ -167,17 +193,17 @@ export function Tabel({
       <div className="stat-blok-kop">
         <h2>
           {titel}
-          {alleenToestemming && <span className="etiket etiket-toestemming">alleen met toestemming</span>}
+          {alleenToestemming && <span className="etiket etiket-toestemming">{t.etiketToestemming}</span>}
         </h2>
         {csv && lijst.length > 0 && (
           <Link href={csv} className="knop-link" prefetch={false}>
-            CSV
+            {t.csv}
           </Link>
         )}
       </div>
       {uitleg && <p className="stat-uitleg">{uitleg}</p>}
       {lijst.length === 0 ? (
-        <p className="stat-leeg">Nog geen gegevens in deze periode.</p>
+        <p className="stat-leeg">{t.leeg}</p>
       ) : (
         <div className="tabel-scroll">
           <table className="beheer-tabel stat-tabel">
@@ -201,10 +227,10 @@ export function Tabel({
                             className="stat-balk"
                             style={{ width: `${Math.round(((Number(r[k.sleutel]) || 0) / max) * 100)}%` }}
                           />
-                          <span>{opmaak(r[k.sleutel], k.soort ?? "tekst")}</span>
+                          <span>{opmaak(r[k.sleutel], k.soort ?? "tekst", taal)}</span>
                         </span>
                       ) : (
-                        opmaak(r[k.sleutel], k.soort ?? "tekst")
+                        opmaak(r[k.sleutel], k.soort ?? "tekst", taal)
                       )}
                     </td>
                   ))}

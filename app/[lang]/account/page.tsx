@@ -62,7 +62,7 @@ async function Inhoud({ params }: Props) {
           </Link>
         )}
         {(sessie.rol === "redacteur" || sessie.rol === "beheerder") && (
-          <Link href="/beheer" className="knop knop-licht">
+          <Link href={`/beheer?taal=${lang}`} className="knop knop-licht">
             {t.naarBeheer}
           </Link>
         )}

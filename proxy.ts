@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { beheerTaalCookie } from "./lib/beheer/teksten";
 import { isTaal, standaardTaal, taalCookie, talen, type Taal } from "./lib/site";
 
 // Taal voor het kale adres "/": eerst de onthouden keuze (cookie), anders
@@ -29,6 +30,25 @@ function kiesTaal(request: NextRequest): Taal {
 // zo nodig vernieuwd, zodat pagina's altijd een geldige sessie zien.
 // Bezoekers zonder sessie merken er niets van.
 export async function proxy(request: NextRequest) {
+  // Beheerpaneel geopend met ?taal=… (vanaf de website of de taalkiezer in
+  // het beheerpaneel): de taal onthouden en door naar het adres zonder
+  // ?taal (W-ADM-20).
+  const beheerTaal = request.nextUrl.searchParams.get("taal");
+  if (request.nextUrl.pathname.startsWith("/beheer") && isTaal(beheerTaal)) {
+    const url = request.nextUrl.clone();
+    url.searchParams.delete("taal");
+    const doorsturen = NextResponse.redirect(url, 303);
+    doorsturen.cookies.set(beheerTaalCookie, beheerTaal, {
+      path: "/beheer",
+      maxAge: 31536000,
+      sameSite: "lax",
+      secure: true,
+      httpOnly: true,
+    });
+    doorsturen.headers.set("Cache-Control", "private, no-store");
+    return doorsturen;
+  }
+
   if (request.nextUrl.pathname === "/") {
     const url = request.nextUrl.clone();
     url.pathname = `/${kiesTaal(request)}`;

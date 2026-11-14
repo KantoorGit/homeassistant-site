@@ -1,7 +1,8 @@
+import type { BeheerTeksten } from "@/lib/beheer/teksten";
 import type { Kolom } from "./onderdelen";
 
-// Welke tabellen op welk tabblad staan, met kolommen. Dezelfde lijst wordt
-// gebruikt voor de CSV-download.
+// Welke tabellen op welk tabblad staan, met kolommen, in de taal van het
+// beheerpaneel (W-ADM-20). Dezelfde lijst wordt gebruikt voor de CSV-download.
 
 export type Sectie = {
   titel: string;
@@ -10,207 +11,137 @@ export type Sectie = {
   alleenToestemming?: boolean;
 };
 
-const sessies: Kolom = { sleutel: "sessies", label: "Sessies", soort: "getal" };
+export function maakSecties(t: BeheerTeksten): Record<string, Sectie> {
+  const k = t.kol;
+  const n = t.sectie;
+  const getal = (sleutel: string, label: string): Kolom => ({ sleutel, label, soort: "getal" });
+  const tekst = (sleutel: string, label: string): Kolom => ({ sleutel, label });
+  const sessies = getal("sessies", k.sessies);
+  const naamMet = (label: string) => [tekst("naam", label), sessies];
 
-export const secties: Record<string, Sectie> = {
-  per_dag: {
-    titel: "Per dag",
-    kolommen: [
-      { sleutel: "dag", label: "Dag" },
-      { sleutel: "bezoekers", label: "Bezoekers", soort: "getal" },
-      sessies,
-      { sleutel: "paginaweergaven", label: "Paginaweergaven", soort: "getal" },
-    ],
-  },
-  kanalen: {
-    titel: "Kanalen",
-    kolommen: [
-      { sleutel: "naam", label: "Kanaal" },
-      sessies,
-      { sleutel: "bezoekers", label: "Bezoekers", soort: "getal" },
-      { sleutel: "paginaweergaven", label: "Paginaweergaven", soort: "getal" },
-    ],
-  },
-  verwijzers: {
-    titel: "Verwijzende sites",
-    kolommen: [{ sleutel: "naam", label: "Site" }, sessies],
-  },
-  zoekmachines: {
-    titel: "Zoekmachines",
-    kolommen: [{ sleutel: "naam", label: "Zoekmachine" }, sessies],
-    uitleg:
-      "Zoekwoorden geven zoekmachines niet aan de site door. Die komen later via Google Search Console en Bing Webmaster Tools (W-ANA-11).",
-  },
-  campagnes: {
-    titel: "Campagnes (UTM-codes)",
-    kolommen: [
-      { sleutel: "campagne", label: "Campagne" },
-      { sleutel: "bron", label: "Bron" },
-      { sleutel: "medium", label: "Medium" },
-      sessies,
-    ],
-  },
-  landen: { titel: "Landen", kolommen: [{ sleutel: "naam", label: "Land" }, sessies] },
-  regios: { titel: "Regio's", kolommen: [{ sleutel: "naam", label: "Regio" }, sessies] },
-  steden: {
-    titel: "Steden",
-    kolommen: [{ sleutel: "naam", label: "Stad" }, sessies],
-    alleenToestemming: true,
-  },
-  sitetalen: { titel: "Taal van de site", kolommen: [{ sleutel: "naam", label: "Taal" }, sessies] },
-  browsertalen: { titel: "Taal van de browser", kolommen: [{ sleutel: "naam", label: "Taal" }, sessies] },
-  apparaten: { titel: "Apparaten", kolommen: [{ sleutel: "naam", label: "Apparaat" }, sessies] },
-  browsers: { titel: "Browsers", kolommen: [{ sleutel: "naam", label: "Browser" }, sessies] },
-  besturingssystemen: {
-    titel: "Besturingssystemen",
-    kolommen: [{ sleutel: "naam", label: "Besturingssysteem" }, sessies],
-  },
-  schermen: { titel: "Schermresolutie", kolommen: [{ sleutel: "naam", label: "Scherm" }, sessies] },
-  nieuw_terugkerend: {
-    titel: "Nieuwe en terugkerende bezoekers",
-    kolommen: [
-      { sleutel: "naam", label: "Soort" },
-      { sleutel: "bezoekers", label: "Bezoekers", soort: "getal" },
-      sessies,
-    ],
-    alleenToestemming: true,
-  },
-  bezoekfrequentie: {
-    titel: "Aantal bezoeken per bezoeker",
-    kolommen: [
-      { sleutel: "bezoeken", label: "Bezoeken in deze periode" },
-      { sleutel: "bezoekers", label: "Bezoekers", soort: "getal" },
-    ],
-    alleenToestemming: true,
-  },
-  paginas: {
-    titel: "Populairste pagina's",
-    kolommen: [
-      { sleutel: "naam", label: "Pagina" },
-      { sleutel: "weergaven", label: "Weergaven", soort: "getal" },
-      sessies,
-      { sleutel: "gem_ms", label: "Gem. actieve tijd", soort: "ms" },
-    ],
-  },
-  artikelen: {
-    titel: "Artikelen",
-    kolommen: [
-      { sleutel: "kop", label: "Artikel" },
-      { sleutel: "weergaven", label: "Weergaven", soort: "getal" },
-      sessies,
-    ],
-  },
-  categorieen: {
-    titel: "Categorieën en paginasoorten",
-    kolommen: [
-      { sleutel: "naam", label: "Categorie" },
-      { sleutel: "weergaven", label: "Weergaven", soort: "getal" },
-    ],
-  },
-  instap: {
-    titel: "Instappagina's",
-    kolommen: [
-      { sleutel: "naam", label: "Pagina" },
-      sessies,
-      { sleutel: "een_pagina_pct", label: "Alleen deze pagina", soort: "pct" },
-    ],
-  },
-  uitstap: { titel: "Uitstappagina's", kolommen: [{ sleutel: "naam", label: "Pagina" }, sessies] },
-  paden: {
-    titel: "Paden (van pagina naar pagina)",
-    kolommen: [
-      { sleutel: "van", label: "Van" },
-      { sleutel: "naar", label: "Naar" },
-      { sleutel: "aantal", label: "Aantal", soort: "getal" },
-    ],
-  },
-  klikken: {
-    titel: "Klikken",
-    kolommen: [
-      { sleutel: "plek", label: "Plek" },
-      { sleutel: "naam", label: "Doel van de klik" },
-      { sleutel: "aantal", label: "Aantal", soort: "getal" },
-    ],
-  },
-  scroll: {
-    titel: "Scrolldiepte per artikel",
-    kolommen: [
-      { sleutel: "pad", label: "Artikel" },
-      { sleutel: "p25", label: "25%", soort: "getal" },
-      { sleutel: "p50", label: "50%", soort: "getal" },
-      { sleutel: "p75", label: "75%", soort: "getal" },
-      { sleutel: "p100", label: "Uitgelezen", soort: "getal" },
-    ],
-  },
-  video: {
-    titel: "Video's",
-    kolommen: [
-      { sleutel: "video", label: "YouTube-video" },
-      { sleutel: "gestart", label: "Gestart", soort: "getal" },
-      { sleutel: "p25", label: "25%", soort: "getal" },
-      { sleutel: "p50", label: "50%", soort: "getal" },
-      { sleutel: "p75", label: "75%", soort: "getal" },
-      { sleutel: "uitgekeken", label: "Uitgekeken", soort: "getal" },
-    ],
-  },
-  trainingen: {
-    titel: "Trainingen",
-    kolommen: [
-      { sleutel: "pad", label: "Training" },
-      { sleutel: "stap", label: "Stap" },
-      sessies,
-    ],
-    uitleg: "Stappen worden geteld zodra trainingen genummerde stappen hebben; \"afgerond\" = tot het eind gelezen.",
-  },
-  zoeken: {
-    titel: "Zoekopdrachten op de site",
-    kolommen: [
-      { sleutel: "zoekterm", label: "Zoekterm" },
-      { sleutel: "aantal", label: "Aantal", soort: "getal" },
-      { sleutel: "gem_resultaten", label: "Gem. resultaten", soort: "getal" },
-    ],
-    uitleg: "Telt zodra de zoekfunctie er is (W-LAY-07).",
-  },
-  fouten404: {
-    titel: "Foutpagina's (404)",
-    kolommen: [
-      { sleutel: "pad", label: "Adres" },
-      { sleutel: "verwijzer", label: "Verwezen door" },
-      { sleutel: "aantal", label: "Aantal", soort: "getal" },
-    ],
-  },
-  snelheid: {
-    titel: "Laadsnelheid (Core Web Vitals, 75e percentiel)",
-    kolommen: [
-      { sleutel: "meting", label: "Meting" },
-      { sleutel: "apparaat", label: "Apparaat" },
-      { sleutel: "aantal", label: "Metingen", soort: "getal" },
-      { sleutel: "p75", label: "Waarde (LCP en INP in ms)", soort: "seconden" },
-    ],
-    uitleg: "Goed is: LCP onder 2500 ms, INP onder 200 ms, CLS onder 0,1.",
-  },
-  doelen: {
-    titel: "Doelen",
-    kolommen: [
-      { sleutel: "naam", label: "Doel" },
-      { sleutel: "aantal", label: "Aantal", soort: "getal" },
-      sessies,
-    ],
-  },
-  taalwissels: {
-    titel: "Taalwissels",
-    kolommen: [
-      { sleutel: "naam", label: "Van → naar" },
-      { sleutel: "aantal", label: "Aantal", soort: "getal" },
-    ],
-  },
-};
+  return {
+    per_dag: {
+      titel: n.per_dag,
+      kolommen: [tekst("dag", k.dag), getal("bezoekers", k.bezoekers), sessies, getal("paginaweergaven", k.paginaweergaven)],
+    },
+    kanalen: {
+      titel: n.kanalen,
+      kolommen: [tekst("naam", k.kanaal), sessies, getal("bezoekers", k.bezoekers), getal("paginaweergaven", k.paginaweergaven)],
+    },
+    verwijzers: { titel: n.verwijzers, kolommen: naamMet(k.site) },
+    zoekmachines: { titel: n.zoekmachines, kolommen: naamMet(k.zoekmachine), uitleg: n.zoekmachinesUitleg },
+    campagnes: {
+      titel: n.campagnes,
+      kolommen: [tekst("campagne", k.campagne), tekst("bron", k.bron), tekst("medium", k.medium), sessies],
+    },
+    landen: { titel: n.landen, kolommen: naamMet(k.land) },
+    regios: { titel: n.regios, kolommen: naamMet(k.regio) },
+    steden: { titel: n.steden, kolommen: naamMet(k.stad), alleenToestemming: true },
+    sitetalen: { titel: n.sitetalen, kolommen: naamMet(k.taal) },
+    browsertalen: { titel: n.browsertalen, kolommen: naamMet(k.taal) },
+    apparaten: { titel: n.apparaten, kolommen: naamMet(k.apparaat) },
+    browsers: { titel: n.browsers, kolommen: naamMet(k.browser) },
+    besturingssystemen: { titel: n.besturingssystemen, kolommen: naamMet(k.besturingssysteem) },
+    schermen: { titel: n.schermen, kolommen: naamMet(k.scherm) },
+    nieuw_terugkerend: {
+      titel: n.nieuw_terugkerend,
+      kolommen: [tekst("naam", k.soort), getal("bezoekers", k.bezoekers), sessies],
+      alleenToestemming: true,
+    },
+    bezoekfrequentie: {
+      titel: n.bezoekfrequentie,
+      kolommen: [tekst("bezoeken", k.bezoekenPeriode), getal("bezoekers", k.bezoekers)],
+      alleenToestemming: true,
+    },
+    paginas: {
+      titel: n.paginas,
+      kolommen: [
+        tekst("naam", k.pagina),
+        getal("weergaven", k.weergaven),
+        sessies,
+        { sleutel: "gem_ms", label: k.gemTijd, soort: "ms" },
+      ],
+    },
+    artikelen: {
+      titel: n.artikelen,
+      kolommen: [tekst("kop", k.artikel), getal("weergaven", k.weergaven), sessies],
+    },
+    categorieen: {
+      titel: n.categorieen,
+      kolommen: [tekst("naam", k.categorie), getal("weergaven", k.weergaven)],
+    },
+    instap: {
+      titel: n.instap,
+      kolommen: [tekst("naam", k.pagina), sessies, { sleutel: "een_pagina_pct", label: k.alleenDeze, soort: "pct" }],
+    },
+    uitstap: { titel: n.uitstap, kolommen: naamMet(k.pagina) },
+    paden: {
+      titel: n.paden,
+      kolommen: [tekst("van", k.van), tekst("naar", k.naar), getal("aantal", k.aantal)],
+    },
+    klikken: {
+      titel: n.klikken,
+      kolommen: [tekst("plek", k.plek), tekst("naam", k.klikDoel), getal("aantal", k.aantal)],
+    },
+    scroll: {
+      titel: n.scroll,
+      kolommen: [
+        tekst("pad", k.artikel),
+        getal("p25", k.p25),
+        getal("p50", k.p50),
+        getal("p75", k.p75),
+        getal("p100", k.uitgelezen),
+      ],
+    },
+    video: {
+      titel: n.video,
+      kolommen: [
+        tekst("video", k.video),
+        getal("gestart", k.gestart),
+        getal("p25", k.p25),
+        getal("p50", k.p50),
+        getal("p75", k.p75),
+        getal("uitgekeken", k.uitgekeken),
+      ],
+    },
+    trainingen: {
+      titel: n.trainingen,
+      kolommen: [tekst("pad", k.training), tekst("stap", k.stap), sessies],
+      uitleg: n.trainingenUitleg,
+    },
+    zoeken: {
+      titel: n.zoeken,
+      kolommen: [tekst("zoekterm", k.zoekterm), getal("aantal", k.aantal), getal("gem_resultaten", k.gemResultaten)],
+      uitleg: n.zoekenUitleg,
+    },
+    fouten404: {
+      titel: n.fouten404,
+      kolommen: [tekst("pad", k.adres), tekst("verwijzer", k.verwezenDoor), getal("aantal", k.aantal)],
+    },
+    snelheid: {
+      titel: n.snelheid,
+      kolommen: [
+        tekst("meting", k.meting),
+        tekst("apparaat", k.apparaat),
+        getal("aantal", k.metingen),
+        { sleutel: "p75", label: k.waarde, soort: "seconden" },
+      ],
+      uitleg: n.snelheidUitleg,
+    },
+    doelen: {
+      titel: n.doelen,
+      kolommen: [tekst("naam", k.doel), getal("aantal", k.aantal), sessies],
+    },
+    taalwissels: {
+      titel: n.taalwissels,
+      kolommen: [tekst("naam", k.vanNaar), getal("aantal", k.aantal)],
+    },
+  };
+}
 
-export const doelNamen: Record<string, string> = {
-  registratie_voltooid: "Account aangemaakt",
-  "2fa_gekoppeld": "Authenticator-app gekoppeld",
-  ingelogd: "Ingelogd",
-  forum_vraag: "Nieuwe forumvraag",
-  forum_reactie: "Reactie op het forum",
-  forum_melding: "Melding van een bericht",
-};
+// Waarden uit de database die op het scherm vertaald worden (apparaat,
+// kanaal, nieuw/terugkerend). Onbekende waarden blijven zoals ze zijn.
+export function vertaalWaarde<W>(t: BeheerTeksten, waarde: W): W | string {
+  if (typeof waarde !== "string") return waarde;
+  return (t.waarde as Record<string, string>)[waarde] ?? waarde;
+}

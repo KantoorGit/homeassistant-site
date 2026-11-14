@@ -2,8 +2,11 @@
 
 import { useActionState, useState } from "react";
 import Vertaalschakelaars from "@/components/Vertaalschakelaars";
+import { telTekst, vul, type BeheerTeksten } from "@/lib/beheer/teksten";
 import type { Taal } from "@/lib/site";
 import { artikelOpslaan, artikelVertalen } from "../acties";
+import Mediaveld from "./Mediaveld";
+import Plekkiezer from "./Plekkiezer";
 
 export type Tekstvelden = { kop: string; intro: string; tekst: string; slug: string };
 
@@ -22,178 +25,195 @@ export type FormulierGegevens = {
   auteur: string;
   status: "concept" | "gepubliceerd";
   gepubliceerdOp: string; // "2026-11-13T10:00", Amsterdamse tijd
-  uitgelicht: boolean;
+  positie: number | null;
   afbeeldingUrl: string;
   videoUrl: string;
   teksten: Partial<Record<Taal, Tekstvelden>>;
   vertaalinfo: Partial<Record<Taal, Vertaalinfo>>;
 };
 
+type T = BeheerTeksten;
+
 function Tekstblok({
   taal,
   t,
+  waarden,
   verplicht,
-  open = true,
 }: {
   taal: Taal;
-  t: Tekstvelden;
+  t: T["formulier"];
+  waarden: Tekstvelden;
   verplicht: boolean;
-  open?: boolean;
 }) {
   return (
-    <div className="taalvelden" data-open={open}>
+    <div className="taalvelden">
       <label>
-        Kop
-        <input name={`kop_${taal}`} defaultValue={t.kop} required={verplicht} />
+        {t.kop}
+        <input name={`kop_${taal}`} defaultValue={waarden.kop} required={verplicht} lang={taal} />
       </label>
       <label>
-        Intro (één of twee zinnen, ook gebruikt in zoekmachines)
-        <textarea name={`intro_${taal}`} defaultValue={t.intro} rows={2} />
+        {t.intro}
+        <textarea name={`intro_${taal}`} defaultValue={waarden.intro} rows={2} lang={taal} />
       </label>
       <label>
-        Tekst
-        <textarea name={`tekst_${taal}`} defaultValue={t.tekst} rows={verplicht ? 14 : 8} />
-        <small>
-          Laat een witregel tussen alinea’s. Code tussen ``` wordt nooit vertaald.
-        </small>
+        {t.tekst}
+        <textarea name={`tekst_${taal}`} defaultValue={waarden.tekst} rows={verplicht ? 14 : 8} lang={taal} />
+        <small>{t.tekstUitleg}</small>
       </label>
       <label>
-        Webadres (leeg = gemaakt uit de kop)
-        <input
-          name={`slug_${taal}`}
-          defaultValue={t.slug}
-          placeholder="bijv. lampen-aan-bij-zonsondergang"
-        />
+        {t.webadres}
+        <input name={`slug_${taal}`} defaultValue={waarden.slug} placeholder={t.webadresVoorbeeld} />
       </label>
     </div>
   );
 }
 
-function statusTekst(info?: Vertaalinfo): string {
-  if (!info) return "Nog niet vertaald";
+function statusTekst(t: T["formulier"], info?: Vertaalinfo): string {
+  if (!info) return t.nogNietVertaald;
   const delen: string[] = [];
-  if (info.status === "wachtend" || info.status === "bezig") delen.push("in de wachtrij");
-  if (info.status === "mislukt") delen.push(`vertalen mislukt${info.fout ? `: ${info.fout}` : ""}`);
-  if (info.handmatig) delen.push("met de hand verbeterd");
-  else if (info.automatisch) delen.push("automatisch vertaald");
-  return delen.join(" · ") || "vertaald";
+  if (info.status === "wachtend" || info.status === "bezig") delen.push(t.inWachtrij);
+  if (info.status === "mislukt") delen.push(`${t.vertalenMislukt}${info.fout ? `: ${info.fout}` : ""}`);
+  if (info.handmatig) delen.push(t.handmatig);
+  else if (info.automatisch) delen.push(t.automatisch);
+  return delen.join(" · ") || t.vertaald;
 }
 
 export default function ArtikelFormulier({
   gegevens,
   categorieen,
+  overigNaam,
   talen,
   actieveTalen,
   taalNamen,
   mijnTalen,
   opgeslagen,
+  bezettePlekken,
+  t,
+  supabaseUrl,
+  supabaseSleutel,
 }: {
   gegevens: FormulierGegevens;
-  categorieen: { id: string; naam: string }[];
+  // 'verwijderd' = de categorie van dit artikel is verwijderd: het staat op de
+  // site onder Overig, maar onthoudt zijn categorie (W-ADM-14).
+  categorieen: { id: string; naam: string; verwijderd?: boolean }[];
+  overigNaam: string;
   talen: Taal[];
   actieveTalen: Taal[];
   taalNamen: Record<Taal, string>;
   mijnTalen: Taal[];
   opgeslagen: boolean;
+  bezettePlekken: Record<number, { id: string; kop: string }>;
+  t: T;
+  supabaseUrl: string;
+  supabaseSleutel: string;
 }) {
+  const f = t.formulier;
   const [staat, actie, bezig] = useActionState(artikelOpslaan, undefined);
   const [origineel, zetOrigineel] = useState<Taal>(gegevens.origineleTaal);
   const nieuw = !gegevens.id;
-  const andere = actieveTalen.filter((t) => t !== origineel);
+  const andere = actieveTalen.filter((x) => x !== origineel);
   // Nieuw artikel: standaard naar alle andere talen vertalen (W-TAAL-11, -12).
   const [aan, zetAan] = useState<Taal[]>(actieveTalen);
-  const aantal = andere.filter((t) => aan.includes(t)).length;
+  const aantal = andere.filter((x) => aan.includes(x)).length;
   const leeg: Tekstvelden = { kop: "", intro: "", tekst: "", slug: "" };
 
   return (
     <>
       <form action={actie} className="formulier artikel-formulier">
         {gegevens.id && <input type="hidden" name="id" value={gegevens.id} />}
+        <input type="hidden" name="huidige_categorie" value={gegevens.categorie} />
 
         {opgeslagen && !staat?.fout && !bezig && (
           <p className="melding" role="status">
-            Opgeslagen.
+            {f.opgeslagen}
           </p>
         )}
 
         <fieldset className="velden-rij">
-          <legend>Plaatsing</legend>
+          <legend>{f.plaatsing}</legend>
           <label>
-            Categorie
+            {f.categorie}
             <select name="categorie" defaultValue={gegevens.categorie} required>
               <option value="" disabled>
-                Kies…
+                {f.kies}
               </option>
               {categorieen.map((c) => (
                 <option key={c.id} value={c.id}>
-                  {c.naam}
+                  {c.verwijderd ? vul(f.verwijderdeCategorie, { naam: c.naam, overig: overigNaam }) : c.naam}
                 </option>
               ))}
             </select>
           </label>
           <label>
-            Taal waarin je schrijft
+            {f.taalSchrijf}
             <select
               name="originele_taal"
               value={origineel}
               onChange={(e) => zetOrigineel(e.target.value as Taal)}
             >
-              {talen.map((t) => (
-                <option key={t} value={t} disabled={!mijnTalen.includes(t)}>
-                  {taalNamen[t]}
+              {talen.map((x) => (
+                <option key={x} value={x} disabled={!mijnTalen.includes(x)}>
+                  {taalNamen[x]}
                 </option>
               ))}
             </select>
           </label>
           <label>
-            Auteur
+            {f.auteur}
             <input name="auteur" defaultValue={gegevens.auteur} />
           </label>
         </fieldset>
 
-        <fieldset className="velden-rij">
-          <legend>Publicatie</legend>
+        <fieldset className="velden-rij publicatie">
+          <legend>{f.publicatie}</legend>
           <label>
-            Status
+            {f.status}
             <select name="status" defaultValue={gegevens.status}>
-              <option value="concept">Concept (niet zichtbaar)</option>
-              <option value="gepubliceerd">Publiceren</option>
+              <option value="concept">{f.statusConcept}</option>
+              <option value="gepubliceerd">{f.statusPubliceren}</option>
             </select>
           </label>
           <label>
-            Publicatiedatum en -tijd
+            {f.publicatieTijd}
             <input type="datetime-local" name="gepubliceerd_op" defaultValue={gegevens.gepubliceerdOp} />
-            <small>Leeg = nu. Een tijd in de toekomst = gepland.</small>
+            <small>{f.publicatieUitleg}</small>
           </label>
-          <label className="vinkje">
-            <input type="checkbox" name="uitgelicht" value="aan" defaultChecked={gegevens.uitgelicht} />
-            Uitlichten: groot bovenaan de voorpagina
-          </label>
+          <Plekkiezer t={t.plek} waarde={gegevens.positie} bezet={bezettePlekken} eigenId={gegevens.id} />
         </fieldset>
 
-        <fieldset className="velden-rij">
-          <legend>Beeld</legend>
-          <label>
-            Afbeelding (adres, begint met https://)
-            <input name="afbeelding_url" type="url" defaultValue={gegevens.afbeeldingUrl} placeholder="https://…" />
-          </label>
-          <label>
-            YouTube-video (adres)
-            <input
-              name="video_url"
-              type="url"
-              defaultValue={gegevens.videoUrl}
-              placeholder="https://www.youtube.com/watch?v=…"
+        <fieldset className="velden-rij beeld">
+          <legend>{f.beeld}</legend>
+          <div className="beeld-blok">
+            <h3>{f.afbeelding}</h3>
+            <Mediaveld
+              soort="afbeelding"
+              naam="afbeelding_url"
+              waarde={gegevens.afbeeldingUrl}
+              t={f}
+              supabaseUrl={supabaseUrl}
+              supabaseSleutel={supabaseSleutel}
             />
-          </label>
+          </div>
+          <div className="beeld-blok">
+            <h3>{f.video}</h3>
+            <Mediaveld
+              soort="video"
+              naam="video_url"
+              waarde={gegevens.videoUrl}
+              t={f}
+              supabaseUrl={supabaseUrl}
+              supabaseSleutel={supabaseSleutel}
+            />
+          </div>
         </fieldset>
 
         <fieldset className="taalblok">
-          <legend>{taalNamen[origineel]} (origineel)</legend>
+          <legend>{vul(f.origineel, { taal: taalNamen[origineel] })}</legend>
           <Tekstblok
             key={origineel}
             taal={origineel}
-            t={gegevens.teksten[origineel] ?? leeg}
+            t={f}
+            waarden={gegevens.teksten[origineel] ?? leeg}
             verplicht
           />
         </fieldset>
@@ -201,31 +221,25 @@ export default function ArtikelFormulier({
         {/* Bestaande vertalingen: te verbeteren met de hand (W-TAAL-07). */}
         {!nieuw && andere.length > 0 && (
           <fieldset className="taalblok vertalingen">
-            <legend>Vertalingen</legend>
-            <p className="uitleg">
-              Een vertaling die je hier verandert, telt als met de hand verbeterd en wordt niet
-              zonder bevestiging overschreven.
-            </p>
+            <legend>{f.vertalingen}</legend>
+            <p className="uitleg">{f.vertalingenUitleg}</p>
             {andere.map((taal) => {
-              const t = gegevens.teksten[taal];
+              const tekst = gegevens.teksten[taal];
               const info = gegevens.vertaalinfo[taal];
               const magSchrijven = mijnTalen.includes(taal);
               return (
                 <details key={taal} className="vertaling">
                   <summary>
                     <strong>{taalNamen[taal]}</strong>{" "}
-                    <span className={`vertaalstatus-label ${info?.status ?? ""}`}>{statusTekst(info)}</span>
+                    <span className={`vertaalstatus-label ${info?.status ?? ""}`}>{statusTekst(f, info)}</span>
                   </summary>
-                  {t ? (
+                  {tekst ? (
                     <fieldset disabled={!magSchrijven}>
-                      {!magSchrijven && <p className="uitleg">Alleen lezen: je schrijft niet in deze taal.</p>}
-                      <Tekstblok taal={taal} t={t} verplicht={false} />
+                      {!magSchrijven && <p className="uitleg">{f.alleenLezen}</p>}
+                      <Tekstblok taal={taal} t={f} waarden={tekst} verplicht={false} />
                     </fieldset>
                   ) : (
-                    <p className="uitleg">
-                      Er is nog geen tekst in deze taal. Gebruik &lsquo;Vertalen naar andere talen&rsquo;
-                      hieronder.
-                    </p>
+                    <p className="uitleg">{f.nogGeenTekst}</p>
                   )}
                 </details>
               );
@@ -234,13 +248,7 @@ export default function ArtikelFormulier({
         )}
 
         {nieuw && (
-          <Vertaalschakelaars
-            titel="Ook automatisch vertalen naar"
-            talen={andere}
-            namen={taalNamen}
-            aan={aan}
-            zetAan={zetAan}
-          />
+          <Vertaalschakelaars titel={f.ookVertalen} talen={andere} namen={taalNamen} aan={aan} zetAan={zetAan} />
         )}
 
         {staat?.fout && (
@@ -251,19 +259,14 @@ export default function ArtikelFormulier({
         <div className="beheer-knoppen">
           <button type="submit" disabled={bezig}>
             {bezig
-              ? "Bezig met opslaan…"
+              ? f.opslaanBezig
               : !nieuw
-                ? "Opslaan"
+                ? t.algemeen.opslaan
                 : aantal > 0
-                  ? `Opslaan en vertalen naar ${aantal} ${aantal === 1 ? "taal" : "talen"}`
-                  : `Alleen in het ${taalNamen[origineel]} opslaan`}
+                  ? telTekst(aantal, f.opslaanVertalen1, f.opslaanVertalenN)
+                  : vul(f.alleenOpslaanIn, { taal: taalNamen[origineel] })}
           </button>
-          {!nieuw && (
-            <small className="uitleg">
-              Opslaan vertaalt niet automatisch. Werk de andere talen bij met &lsquo;Vertalen naar
-              andere talen&rsquo;.
-            </small>
-          )}
+          {!nieuw && <small className="uitleg">{f.opslaanVertaaltNiet}</small>}
         </div>
       </form>
 
@@ -273,6 +276,7 @@ export default function ArtikelFormulier({
           andere={andere}
           taalNamen={taalNamen}
           vertaalinfo={gegevens.vertaalinfo}
+          t={t}
         />
       )}
     </>
@@ -287,30 +291,30 @@ function Vertaalpaneel({
   andere,
   taalNamen,
   vertaalinfo,
+  t,
 }: {
   id: string;
   andere: Taal[];
   taalNamen: Record<Taal, string>;
   vertaalinfo: Partial<Record<Taal, Vertaalinfo>>;
+  t: T;
 }) {
+  const v = t.vertaalpaneel;
   const [staat, actie, bezig] = useActionState(artikelVertalen, undefined);
-  const handmatig = andere.filter((t) => vertaalinfo[t]?.handmatig);
-  const [aan, zetAan] = useState<Taal[]>(andere.filter((t) => !handmatig.includes(t)));
-  const gekozen = andere.filter((t) => aan.includes(t));
-  const overschrijftHandmatig = gekozen.some((t) => handmatig.includes(t));
-  const waarschuwing = Object.fromEntries(handmatig.map((t) => [t, "met de hand verbeterd"]));
+  const handmatig = andere.filter((x) => vertaalinfo[x]?.handmatig);
+  const [aan, zetAan] = useState<Taal[]>(andere.filter((x) => !handmatig.includes(x)));
+  const gekozen = andere.filter((x) => aan.includes(x));
+  const overschrijftHandmatig = gekozen.some((x) => handmatig.includes(x));
+  const waarschuwing = Object.fromEntries(handmatig.map((x) => [x, t.formulier.handmatig]));
 
   if (andere.length === 0) return null;
   return (
     <form action={actie} className="formulier vertaalpaneel">
-      <h2>Vertalen naar andere talen</h2>
+      <h2>{v.titel}</h2>
       <input type="hidden" name="id" value={id} />
-      <p className="uitleg">
-        Vertaalt de opgeslagen tekst. De vertalingen verschijnen vanzelf zodra de Claude-app op de
-        MacBook de wachtrij heeft afgewerkt.
-      </p>
+      <p className="uitleg">{v.uitleg}</p>
       <Vertaalschakelaars
-        titel="Talen"
+        titel={v.talen}
         talen={andere}
         namen={taalNamen}
         aan={aan}
@@ -320,7 +324,7 @@ function Vertaalpaneel({
       {overschrijftHandmatig && (
         <label className="vinkje">
           <input type="checkbox" name="overschrijven" value="aan" required />
-          Ja, overschrijf de met de hand verbeterde vertalingen
+          {v.overschrijven}
         </label>
       )}
       {staat?.fout && (
@@ -335,9 +339,7 @@ function Vertaalpaneel({
       )}
       <div className="beheer-knoppen">
         <button type="submit" disabled={bezig || gekozen.length === 0}>
-          {bezig
-            ? "Bezig…"
-            : `Vertalen naar ${gekozen.length} ${gekozen.length === 1 ? "taal" : "talen"}`}
+          {bezig ? t.algemeen.bezig : telTekst(gekozen.length, v.vertalen1, v.vertalenN)}
         </button>
       </div>
     </form>

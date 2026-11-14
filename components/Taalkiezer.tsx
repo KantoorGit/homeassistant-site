@@ -11,12 +11,13 @@ import {
   talen,
   teksten,
   vindCategorie,
+  type Categorie,
   type Taal,
 } from "@/lib/site";
 import { onderwerpPad, vindOnderwerp } from "@/lib/forum";
 
 // Zoekt bij de huidige pagina het adres van dezelfde pagina in een andere taal.
-function padInTaal(pad: string, van: Taal, naar: Taal): string {
+function padInTaal(pad: string, van: Taal, naar: Taal, categorieen: Categorie[]): string {
   const delen = pad.split("/").filter(Boolean).slice(1);
   if (delen.length === 0) return `/${naar}`;
   // Forumonderwerpen hebben per taal een eigen adres.
@@ -26,7 +27,7 @@ function padInTaal(pad: string, van: Taal, naar: Taal): string {
       return [onderwerpPad(onderwerp, naar), ...delen.slice(2)].join("/");
     }
   }
-  const categorie = vindCategorie(van, delen[0]);
+  const categorie = vindCategorie(categorieen, van, delen[0])?.categorie;
   if (!categorie) return `/${naar}/${delen.join("/")}`;
   // Bij een artikel blijft het laatste deel staan; de artikelpagina stuurt
   // zelf door naar het adres in de gekozen taal.
@@ -42,8 +43,10 @@ function onthoud(taal: Taal) {
 export default function Taalkiezer({
   taal,
   actieveTalen = talen,
+  categorieen,
 }: {
   taal: Taal;
+  categorieen: Categorie[];
   // Alleen talen die in het beheerpaneel aan staan (W-TAAL-10).
   actieveTalen?: readonly Taal[];
 }) {
@@ -54,7 +57,7 @@ export default function Taalkiezer({
       {talen.filter((t) => actieveTalen.includes(t) || t === taal).map((t) => (
         <Link
           key={t}
-          href={padInTaal(pad, taal, t)}
+          href={padInTaal(pad, taal, t, categorieen)}
           hrefLang={taalCode[t]}
           lang={taalCode[t]}
           title={taalNamen[t]}
