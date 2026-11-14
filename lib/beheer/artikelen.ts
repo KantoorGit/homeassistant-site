@@ -31,6 +31,9 @@ export type BeheerArtikel = {
   afbeelding_origineel_url?: string | null;
   afbeelding_bron_url?: string | null;
   afbeelding_uitsnede?: unknown;
+  // Uit supabase/009_…sql (16:9-foto maken).
+  afbeelding_opmaak_url?: string | null;
+  afbeelding_opmaak?: unknown;
   is_voorbeeld: boolean;
   bijgewerkt: string;
   artikel_vertalingen: BeheerVertaling[];
@@ -134,4 +137,41 @@ export function leesUitsnede(waarde: unknown): Uitsnede | null {
   if (x === null || y === null || !breedte || !hoogte) return null;
   if (x + breedte > 100.01 || y + hoogte > 100.01) return null;
   return { x, y, breedte, hoogte, verhouding: o.verhouding === "vrij" ? "vrij" : "16:9" };
+}
+
+// Zelf opgemaakte 16:9-foto (W-ADM-23): plek en grootte van de foto in
+// procenten van het 16:9-vlak (mag buiten het vlak vallen), en de
+// achtergrond voor de lege ruimte.
+export type Opmaak = {
+  x: number;
+  y: number;
+  breedte: number;
+  hoogte: number;
+  vast: boolean;
+  achtergrond: string; // "#rrggbb" of "vervaagd"
+};
+
+export function leesOpmaak(waarde: unknown): Opmaak | null {
+  let w = waarde;
+  if (typeof w === "string") {
+    try {
+      w = JSON.parse(w);
+    } catch {
+      return null;
+    }
+  }
+  if (!w || typeof w !== "object") return null;
+  const o = w as Record<string, unknown>;
+  const getal = (n: unknown, min: number, max: number) =>
+    typeof n === "number" && Number.isFinite(n) && n >= min && n <= max ? n : null;
+  const x = getal(o.x, -1000, 1000);
+  const y = getal(o.y, -1000, 1000);
+  const breedte = getal(o.breedte, 1, 1000);
+  const hoogte = getal(o.hoogte, 1, 1000);
+  if (x === null || y === null || breedte === null || hoogte === null) return null;
+  const achtergrond =
+    typeof o.achtergrond === "string" && /^(#[0-9a-f]{6}|vervaagd)$/i.test(o.achtergrond)
+      ? o.achtergrond.toLowerCase()
+      : "#ffffff";
+  return { x, y, breedte, hoogte, vast: o.vast !== false, achtergrond };
 }

@@ -2,7 +2,7 @@
 
 import { updateTag } from "next/cache";
 import { redirect } from "next/navigation";
-import { leesUitsnede } from "@/lib/beheer/artikelen";
+import { leesOpmaak, leesUitsnede } from "@/lib/beheer/artikelen";
 import { amsterdamNaarIso, maakSlug } from "@/lib/beheer/hulp";
 import { maakSessieClient } from "@/lib/beheer/supabase-sessie";
 import { beheerT } from "@/lib/beheer/taal";
@@ -157,10 +157,14 @@ export async function artikelOpslaan(
   const bronTekst = tekst(formData, "afbeelding_bron_url");
   const afbeeldingOrigineel = afbeeldingUrl && isHttps(origineelTekst) ? origineelTekst : null;
   const afbeeldingBron = afbeeldingUrl && isHttps(bronTekst) ? bronTekst : null;
+  // Zelf opgemaakte 16:9-foto (W-ADM-23); het kader van de uitsnede is in
+  // procenten van die foto als hij er is, anders van het origineel.
+  const opmaakTekst = tekst(formData, "afbeelding_opmaak_url");
+  const afbeeldingOpmaakUrl = afbeeldingOrigineel && isHttps(opmaakTekst) ? opmaakTekst : null;
+  const afbeeldingOpmaak = afbeeldingOpmaakUrl ? leesOpmaak(tekst(formData, "afbeelding_opmaak")) : null;
+  const basisUrl = afbeeldingOpmaakUrl ?? afbeeldingOrigineel;
   const afbeeldingUitsnede =
-    afbeeldingOrigineel && afbeeldingUrl !== afbeeldingOrigineel
-      ? leesUitsnede(tekst(formData, "afbeelding_uitsnede"))
-      : null;
+    basisUrl && afbeeldingUrl !== basisUrl ? leesUitsnede(tekst(formData, "afbeelding_uitsnede")) : null;
   // Plek op de voorpagina (W-ADM-17): leeg = geen vaste plek, 1 = groot
   // bovenaan, 2-7 = de zes plekken eronder.
   const positieTekst = tekst(formData, "positie");
@@ -183,6 +187,8 @@ export async function artikelOpslaan(
     afbeelding_origineel_url: afbeeldingOrigineel,
     afbeelding_bron_url: afbeeldingBron,
     afbeelding_uitsnede: afbeeldingUitsnede,
+    afbeelding_opmaak_url: afbeeldingOpmaakUrl,
+    afbeelding_opmaak: afbeeldingOpmaak,
     video_url: videoUrl,
     status,
     gepubliceerd_op: gepubliceerdOp,
@@ -197,10 +203,19 @@ export async function artikelOpslaan(
     delete kopie.afbeelding_origineel_url;
     delete kopie.afbeelding_bron_url;
     delete kopie.afbeelding_uitsnede;
+    delete kopie.afbeelding_opmaak_url;
+    delete kopie.afbeelding_opmaak;
+    return kopie;
+  };
+  // Alleen 009 nog niet uitgevoerd: wel origineel en kader, zonder opmaak.
+  const zonderOpmaak = () => {
+    const kopie: Partial<typeof gegevens> = { ...gegevens };
+    delete kopie.afbeelding_opmaak_url;
+    delete kopie.afbeelding_opmaak;
     return kopie;
   };
   const kolomOntbreekt = (e: { code?: string; message?: string } | null) =>
-    !!e && (e.code === "PGRST204" || /afbeelding_(origineel_url|bron_url|uitsnede)/.test(e.message ?? ""));
+    !!e && (e.code === "PGRST204" || /afbeelding_(origineel_url|bron_url|uitsnede|opmaak)/.test(e.message ?? ""));
 
   let artikelId = id;
   if (artikelId) {
@@ -208,6 +223,9 @@ export async function artikelOpslaan(
       .from("artikelen")
       .update(gegevens)
       .eq("id", artikelId);
+    if (kolomOntbreekt(error)) {
+      ({ error } = await supabase.from("artikelen").update(zonderOpmaak()).eq("id", artikelId));
+    }
     if (kolomOntbreekt(error)) {
       ({ error } = await supabase.from("artikelen").update(zonderOrigineel()).eq("id", artikelId));
     }
@@ -218,6 +236,9 @@ export async function artikelOpslaan(
       .insert(gegevens)
       .select("id")
       .single();
+    if (kolomOntbreekt(error)) {
+      ({ data, error } = await supabase.from("artikelen").insert(zonderOpmaak()).select("id").single());
+    }
     if (kolomOntbreekt(error)) {
       ({ data, error } = await supabase.from("artikelen").insert(zonderOrigineel()).select("id").single());
     }

@@ -8,6 +8,7 @@ import {
   categorieKeuzes,
   eenArtikel,
   kopVan,
+  leesOpmaak,
   leesUitsnede,
   positieVan,
 } from "@/lib/beheer/artikelen";
@@ -128,6 +129,8 @@ export default async function ArtikelBewerken({
             origineelUrl: artikel.afbeelding_origineel_url ?? "",
             bronUrl: artikel.afbeelding_bron_url ?? "",
             uitsnede: leesUitsnede(artikel.afbeelding_uitsnede),
+            opmaakUrl: artikel.afbeelding_opmaak_url ?? "",
+            opmaak: leesOpmaak(artikel.afbeelding_opmaak),
           },
           videoUrl: artikel.video_url ?? "",
           teksten,
