@@ -191,6 +191,18 @@ export const es: Teksten = {
     openen: "Reabrir debate",
     geenToegang: "Esta página es solo para moderadores y administradores.",
     status: "Estado",
+    vertalenNaar: "Traducir también automáticamente a",
+    plaatsenEnVertalen: (n: number) => (n === 1 ? "Publicar y traducir a 1 idioma" : `Publicar y traducir a ${n} idiomas`),
+    alleenPlaatsenIn: (taal: string) => `Publicar solo en ${taal}`,
+    vertaalknop: "Traducir a otros idiomas",
+    vertaalStarten: (n: number) => (n === 1 ? "Traducir a 1 idioma" : `Traducir a ${n} idiomas`),
+    vertaalGestart: "La traducción está en la cola y aparecerá automáticamente cuando esté lista.",
+    vertaalStatus: (wacht: number, mislukt: number) =>
+      [wacht ? `${wacht} traducción(es) en la cola` : "", mislukt ? `${mislukt} traducción(es) fallida(s): vuelve a intentarlo con el botón de traducir` : ""].filter(Boolean).join(" · "),
+    bewerken: "Editar",
+    bewerkenOpslaan: "Guardar cambios",
+    bewerktMelding: "Tu mensaje se ha modificado. Las traducciones siguen siendo de la versión anterior: actualízalas con «Traducir a otros idiomas».",
+    vertalingVerouderd: "Esta traducción corresponde a una versión anterior del mensaje.",
   },
 
   forumFouten: {

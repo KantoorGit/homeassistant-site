@@ -181,6 +181,18 @@ export const zh: Teksten = {
     openen: "重新开启讨论",
     geenToegang: "此页面仅供版主和管理员使用。",
     status: "状态",
+    vertalenNaar: "同时自动翻译成",
+    plaatsenEnVertalen: (n: number) => `发布并翻译成 ${n} 种语言`,
+    alleenPlaatsenIn: (taal: string) => `仅以${taal}发布`,
+    vertaalknop: "翻译成其他语言",
+    vertaalStarten: (n: number) => `翻译成 ${n} 种语言`,
+    vertaalGestart: "翻译已加入队列，完成后会自动显示。",
+    vertaalStatus: (wacht: number, mislukt: number) =>
+      [wacht ? `${wacht} 个翻译在队列中` : "", mislukt ? `${mislukt} 个翻译失败——请用翻译按钮重试` : ""].filter(Boolean).join(" · "),
+    bewerken: "编辑",
+    bewerkenOpslaan: "保存修改",
+    bewerktMelding: "您的帖子已修改。现有翻译仍是旧版本的：请用“翻译成其他语言”更新。",
+    vertalingVerouderd: "此翻译对应帖子的早期版本。",
   },
 
   forumFouten: {

@@ -11,6 +11,7 @@ import Cookiebanner from "@/components/Cookiebanner";
 import CookieInstellingenLink from "@/components/CookieInstellingenLink";
 import Meting from "@/components/Meting";
 import { bannerTeksten } from "@/lib/meting/teksten";
+import { haalActieveTalen } from "@/lib/talen-instelling";
 import Taalkiezer from "@/components/Taalkiezer";
 import {
   isTaal,
@@ -46,6 +47,7 @@ export default async function RootLayout({
   const { lang } = await params;
   if (!isTaal(lang)) notFound();
   const t = teksten[lang];
+  const actieveTalen = await haalActieveTalen();
 
   return (
     <html lang={taalCode[lang]}>
@@ -57,7 +59,7 @@ export default async function RootLayout({
             </Link>
             <div className="kop-rechts">
               <Suspense>
-                <Taalkiezer taal={lang} />
+                <Taalkiezer taal={lang} actieveTalen={actieveTalen} />
               </Suspense>
               <Suspense>
                 <Accountmenu taal={lang} />

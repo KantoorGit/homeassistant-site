@@ -191,6 +191,18 @@ export const de: Teksten = {
     openen: "Diskussion wieder öffnen",
     geenToegang: "Diese Seite ist nur für Moderatoren und Administratoren.",
     status: "Status",
+    vertalenNaar: "Auch automatisch übersetzen in",
+    plaatsenEnVertalen: (n: number) => (n === 1 ? "Veröffentlichen und in 1 Sprache übersetzen" : `Veröffentlichen und in ${n} Sprachen übersetzen`),
+    alleenPlaatsenIn: (taal: string) => `Nur auf ${taal} veröffentlichen`,
+    vertaalknop: "In andere Sprachen übersetzen",
+    vertaalStarten: (n: number) => (n === 1 ? "In 1 Sprache übersetzen" : `In ${n} Sprachen übersetzen`),
+    vertaalGestart: "Die Übersetzung steht in der Warteschlange und erscheint automatisch, sobald sie fertig ist.",
+    vertaalStatus: (wacht: number, mislukt: number) =>
+      [wacht ? `${wacht} Übersetzung(en) in der Warteschlange` : "", mislukt ? `${mislukt} Übersetzung(en) fehlgeschlagen – versuche es erneut mit dem Übersetzungsbutton` : ""].filter(Boolean).join(" · "),
+    bewerken: "Bearbeiten",
+    bewerkenOpslaan: "Änderung speichern",
+    bewerktMelding: "Dein Beitrag wurde geändert. Die Übersetzungen stammen noch von der vorherigen Version: Aktualisiere sie mit „In andere Sprachen übersetzen“.",
+    vertalingVerouderd: "Diese Übersetzung gehört zu einer früheren Version des Beitrags.",
   },
 
   forumFouten: {

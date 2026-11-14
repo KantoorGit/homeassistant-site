@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import Accountkader, { Laden } from "@/components/Accountkader";
 import { NieuweDraadFormulier } from "@/components/Forumformulieren";
+import { haalActieveTalen } from "@/lib/talen-instelling";
 import { vereisVolledigIngelogd } from "@/lib/sessie";
 import { isTaal } from "@/lib/site";
 import { ledenTeksten } from "@/lib/teksten-leden";
@@ -25,12 +26,14 @@ async function Inhoud({ params, searchParams }: Props) {
   if (!isTaal(lang)) notFound();
   const { onderwerp } = await searchParams;
   await vereisVolledigIngelogd(lang, `/${lang}/forum/nieuw`);
+  const actieveTalen = await haalActieveTalen();
 
   return (
     <Accountkader titel={ledenTeksten[lang].forum.nieuwTitel}>
       <NieuweDraadFormulier
         taal={lang}
         onderwerp={typeof onderwerp === "string" ? onderwerp : undefined}
+        actieveTalen={actieveTalen}
       />
     </Accountkader>
   );

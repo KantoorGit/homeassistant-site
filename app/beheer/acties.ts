@@ -180,13 +180,34 @@ export async function artikelOpslaan(
     artikelId = data.id as string;
   }
 
-  // De tekst per taal. Een taal zonder kop wordt (behalve het origineel)
-  // weggehaald; talen waarin je niet mag schrijven blijven ongewijzigd.
+  // De tekst per taal. Alleen talen die in het formulier staan en waarin je
+  // mag schrijven; ongewijzigde teksten blijven ongemoeid. Een vertaling die
+  // je met de hand verandert, telt als handmatig verbeterd (W-TAAL-07) en
+  // wordt niet zonder bevestiging overschreven (W-TAAL-15).
+  const { data: bestaandData } = id
+    ? await supabase
+        .from("artikel_vertalingen")
+        .select("taal, slug, kop, intro, tekst, automatisch_vertaald, handmatig_gecorrigeerd")
+        .eq("artikel_id", artikelId)
+    : { data: [] };
+  const bestaand = (bestaandData ?? []) as {
+    taal: string;
+    slug: string;
+    kop: string;
+    intro: string;
+    tekst: string;
+    automatisch_vertaald: boolean;
+    handmatig_gecorrigeerd: boolean;
+  }[];
+
   for (const taal of talen) {
     if (!redacteur.talen.includes(taal)) continue;
+    if (!formData.has(`kop_${taal}`)) continue;
+    const isOrigineel = taal === origineleTaal;
+    const oud = bestaand.find((v) => v.taal === taal);
     const kop = tekst(formData, `kop_${taal}`);
     if (!kop) {
-      if (taal !== origineleTaal) {
+      if (!isOrigineel && oud) {
         await supabase
           .from("artikel_vertalingen")
           .delete()
@@ -195,17 +216,22 @@ export async function artikelOpslaan(
       }
       continue;
     }
-    const slug = maakSlug(tekst(formData, `slug_${taal}`) || kop);
+    const intro = tekst(formData, `intro_${taal}`);
+    const tekstVeld = tekst(formData, `tekst_${taal}`);
+    const slug = maakSlug(tekst(formData, `slug_${taal}`) || kop) || oud?.slug || "";
     if (!slug) return { fout: `Het webadres (${taal}) is leeg.` };
+    if (oud && oud.kop === kop && oud.intro === intro && oud.tekst === tekstVeld && oud.slug === slug) {
+      continue;
+    }
     const { error } = await supabase.from("artikel_vertalingen").upsert({
       artikel_id: artikelId,
       taal,
       slug,
       kop,
-      intro: tekst(formData, `intro_${taal}`),
-      tekst: tekst(formData, `tekst_${taal}`),
-      automatisch_vertaald: false,
-      handmatig_gecorrigeerd: taal !== origineleTaal,
+      intro,
+      tekst: tekstVeld,
+      automatisch_vertaald: isOrigineel ? false : (oud?.automatisch_vertaald ?? false),
+      handmatig_gecorrigeerd: !isOrigineel,
       bijgewerkt: nu,
       bijgewerkt_door: redacteur.id,
     });
@@ -223,8 +249,25 @@ export async function artikelOpslaan(
     }
   }
 
+  // Nieuw artikel: standaard naar alle andere talen vertalen, behalve de
+  // talen die met een schakelaar zijn uitgezet (W-TAAL-11, -12). Bij
+  // bewerken niet automatisch (W-TAAL-14).
+  let vertaald = 0;
+  if (!id) {
+    const gekozen = formData.getAll("vertaal").filter(isTaal);
+    if (gekozen.length > 0) {
+      const { data, error } = await supabase.rpc("vertaal_artikel", {
+        p_artikel: artikelId,
+        p_talen: gekozen,
+        p_overschrijven: false,
+      });
+      if (error) console.error("Vertaling aanvragen mislukt:", error.message);
+      vertaald = typeof data === "number" ? data : 0;
+    }
+  }
+
   updateTag("artikelen");
-  redirect(`/beheer/artikelen/${artikelId}?opgeslagen=1`);
+  redirect(`/beheer/artikelen/${artikelId}?opgeslagen=1${vertaald ? `&vertaald=${vertaald}` : ""}`);
 }
 
 export async function artikelVerwijderen(formData: FormData) {
@@ -234,4 +277,25 @@ export async function artikelVerwijderen(formData: FormData) {
   await supabase.from("artikelen").delete().eq("id", id);
   updateTag("artikelen");
   redirect("/beheer?verwijderd=1");
+}
+
+// "Vertalen naar andere talen" bij een bestaand artikel (W-TAAL-14, -15).
+export async function artikelVertalen(_: Staat, formData: FormData): Promise<Staat> {
+  const { supabase } = await vereisRedacteur();
+  const id = tekst(formData, "id");
+  const gekozen = formData.getAll("vertaal").filter(isTaal);
+  if (!id || gekozen.length === 0) return { fout: "Kies minstens één taal." };
+  const { data, error } = await supabase.rpc("vertaal_artikel", {
+    p_artikel: id,
+    p_talen: gekozen,
+    p_overschrijven: formData.get("overschrijven") === "aan",
+  });
+  if (error) {
+    if (/vertaal_artikel|schema cache|does not exist/i.test(error.message)) {
+      return { fout: "Vertalen is nog niet klaar: voer eerst supabase/006_vertalen.sql uit." };
+    }
+    return { fout: `Vertalen aanvragen mislukt: ${error.message}` };
+  }
+  const n = typeof data === "number" ? data : 0;
+  redirect(`/beheer/artikelen/${id}?vertaald=${n}`);
 }
