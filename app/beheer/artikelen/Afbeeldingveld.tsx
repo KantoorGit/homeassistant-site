@@ -4,10 +4,11 @@ import { createBrowserClient } from "@supabase/ssr";
 import { useRef, useState, useTransition } from "react";
 import ReactCrop, { centerCrop, makeAspectCrop, type PercentCrop } from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
-import type { Uitsnede } from "@/lib/beheer/artikelen";
+import type { Opmaak, Uitsnede } from "@/lib/beheer/artikelen";
 import type { BeheerTeksten } from "@/lib/beheer/teksten";
 import { vul } from "@/lib/beheer/teksten";
 import { afbeeldingKopieren } from "./afbeelding-acties";
+import Opmaakeditor, { tekenOpmaak } from "./Opmaakeditor";
 
 const maxMb = 50;
 const toegestaan = ["image/jpeg", "image/png", "image/webp", "image/gif", "image/avif"];
@@ -30,6 +31,8 @@ export type AfbeeldingWaarden = {
   origineelUrl: string;
   bronUrl: string;
   uitsnede: Uitsnede | null;
+  opmaakUrl: string;
+  opmaak: Opmaak | null;
 };
 
 type Melding = { soort: "fout" | "melding"; tekst: string } | null;
@@ -39,8 +42,10 @@ function pad(achtervoegsel: string, ext: string) {
   return `afbeeldingen/${nu.getFullYear()}/${String(nu.getMonth() + 1).padStart(2, "0")}/${crypto.randomUUID()}-${achtervoegsel}.${ext}`;
 }
 
-// Afbeelding: link plakken of zelf uploaden, en daarna met de hand
-// bijsnijden (W-ADM-18, W-ADM-22). Het origineel blijft bewaard
+// Afbeelding: link plakken of zelf uploaden, eventueel een nieuwe 16:9-foto
+// opmaken uit het origineel (W-ADM-23), en daarna met de hand bijsnijden
+// (W-ADM-18, W-ADM-22). Volgorde: origineel → 16:9-foto → uitsnede; de
+// laatste die er is, toont de site. Het origineel blijft bewaard
 // (afbeelding_origineel_url, bij een link ook afbeelding_bron_url); de
 // uitsnede is een eigen bestand in de map media en is wat de site toont
 // (afbeelding_url). Het kader wordt bewaard, zodat je later opnieuw kunt
@@ -49,12 +54,14 @@ export default function Afbeeldingveld({
   waarden,
   t,
   tu,
+  tm,
   supabaseUrl,
   supabaseSleutel,
 }: {
   waarden: AfbeeldingWaarden;
   t: BeheerTeksten["formulier"];
   tu: BeheerTeksten["uitsnede"];
+  tm: BeheerTeksten["opmaak"];
   supabaseUrl: string;
   supabaseSleutel: string;
 }) {
@@ -67,12 +74,17 @@ export default function Afbeeldingveld({
     waarden.origineelUrl || (isEigen(waarden.afbeeldingUrl) ? waarden.afbeeldingUrl : ""),
   );
   const [bron, zetBron] = useState(waarden.bronUrl);
+  const [opmaakUrl, zetOpmaakUrl] = useState(heeftOrigineel ? waarden.opmaakUrl : "");
+  const [opmaak, zetOpmaak] = useState<Opmaak | null>(waarden.opmaak);
   const [uitsnedeUrl, zetUitsnedeUrl] = useState(
-    heeftOrigineel && waarden.afbeeldingUrl !== waarden.origineelUrl ? waarden.afbeeldingUrl : "",
+    heeftOrigineel && waarden.afbeeldingUrl !== waarden.origineelUrl && waarden.afbeeldingUrl !== waarden.opmaakUrl
+      ? waarden.afbeeldingUrl
+      : "",
   );
   const [kader, zetKader] = useState<Uitsnede | null>(waarden.uitsnede);
 
   const [bewerken, zetBewerken] = useState(false);
+  const [opmaken, zetOpmaken] = useState(false);
   const [crop, zetCrop] = useState<PercentCrop>();
   const [verhouding, zetVerhouding] = useState<Uitsnede["verhouding"]>(waarden.uitsnede?.verhouding ?? "16:9");
   const [melding, zetMelding] = useState<Melding>(null);
@@ -87,6 +99,9 @@ export default function Afbeeldingveld({
     zetLink(adres);
     zetOrigineel(eigen ? adres : "");
     zetBron(eigen ? "" : adres);
+    zetOpmaakUrl("");
+    zetOpmaak(null);
+    zetOpmaken(false);
     zetUitsnedeUrl("");
     zetKader(null);
     zetCrop(undefined);
@@ -130,11 +145,11 @@ export default function Afbeeldingveld({
   }
 
   // Een foto van internet eerst als kopie in de eigen opslag zetten; anders
-  // mag de browser hem niet bijsnijden.
-  function startBijsnijden() {
+  // mag de browser hem niet bijsnijden of opmaken.
+  function metOrigineel(doe: () => void) {
     zetMelding(null);
     if (origineel) {
-      zetBewerken(true);
+      doe();
       return;
     }
     if (!/^https:\/\//.test(link)) return zetMelding({ soort: "fout", tekst: tu.linkOngeldig });
@@ -145,8 +160,54 @@ export default function Afbeeldingveld({
       if (r.fout || !r.url) return zetMelding({ soort: "fout", tekst: r.fout ?? "?" });
       zetOrigineel(r.url);
       zetBron(link);
+      doe();
+    });
+  }
+  const startBijsnijden = () =>
+    metOrigineel(() => {
+      zetOpmaken(false);
       zetBewerken(true);
     });
+  const startOpmaken = () =>
+    metOrigineel(() => {
+      zetBewerken(false);
+      zetOpmaken(true);
+    });
+
+  // De opgemaakte 16:9-foto tekenen en opslaan; daarna meteen het kader
+  // tonen (bijsnijden mag, hoeft niet).
+  async function opmaakGebruiken(img: HTMLImageElement, o: Opmaak) {
+    zetMelding(null);
+    zetBezig(tm.bezig);
+    try {
+      const blob = await tekenOpmaak(img, o);
+      const client = supabase();
+      const p = pad("opmaak", "jpg");
+      const { error } = await client.storage.from("media").upload(p, blob, {
+        contentType: "image/jpeg",
+        cacheControl: "31536000",
+        upsert: false,
+      });
+      if (error) throw new Error(error.message);
+      zetOpmaakUrl(client.storage.from("media").getPublicUrl(p).data.publicUrl);
+      zetOpmaak(o);
+      // Het oude kader hoorde bij een andere foto.
+      zetUitsnedeUrl("");
+      zetKader(null);
+      zetCrop(undefined);
+      zetVerhouding("16:9");
+      zetOpmaken(false);
+      zetBewerken(true);
+      zetMelding({ soort: "melding", tekst: tm.klaar });
+    } catch (e) {
+      const tekst =
+        e instanceof DOMException && e.name === "SecurityError"
+          ? tu.laadFout
+          : vul(tm.mislukt, { fout: e instanceof Error ? e.message : "?" });
+      zetMelding({ soort: "fout", tekst });
+    } finally {
+      zetBezig(null);
+    }
   }
 
   function beginKader(img: HTMLImageElement) {
@@ -224,7 +285,8 @@ export default function Afbeeldingveld({
   }
 
   // Wat de site toont, en wat er bewaard wordt.
-  const opDeSite = uitsnedeUrl || origineel || link;
+  const basis = opmaakUrl || origineel;
+  const opDeSite = uitsnedeUrl || opmaakUrl || origineel || link;
   const toonOrigineel = origineel || (/^https:\/\//.test(link) ? link : "");
 
   return (
@@ -233,6 +295,8 @@ export default function Afbeeldingveld({
       <input type="hidden" name="afbeelding_origineel_url" value={origineel} />
       <input type="hidden" name="afbeelding_bron_url" value={bron} />
       <input type="hidden" name="afbeelding_uitsnede" value={uitsnedeUrl && kader ? JSON.stringify(kader) : ""} />
+      <input type="hidden" name="afbeelding_opmaak_url" value={opmaakUrl} />
+      <input type="hidden" name="afbeelding_opmaak" value={opmaakUrl && opmaak ? JSON.stringify(opmaak) : ""} />
 
       <label>
         {t.afbeeldingLink}
@@ -272,7 +336,18 @@ export default function Afbeeldingveld({
         </p>
       )}
 
-      {bewerken && origineel && (
+      {opmaken && origineel && (
+        <Opmaakeditor
+          src={origineel}
+          begin={opmaak}
+          t={tm}
+          bezig={!!bezig}
+          onGebruiken={(img, o) => void opmaakGebruiken(img, o)}
+          onAnnuleren={() => zetOpmaken(false)}
+        />
+      )}
+
+      {bewerken && basis && (
         <div className="bijsnijden">
           <p className="uitleg">{tu.uitleg}</p>
           <div className="bijsnijden-verhouding" role="radiogroup" aria-label={tu.verhouding}>
@@ -306,7 +381,8 @@ export default function Afbeeldingveld({
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               ref={beeld}
-              src={origineel}
+              key={basis}
+              src={basis}
               alt={tu.origineel}
               crossOrigin="anonymous"
               onLoad={(e) => beginKader(e.currentTarget)}
@@ -324,21 +400,21 @@ export default function Afbeeldingveld({
         </div>
       )}
 
-      {!bewerken && opDeSite && /^https:\/\//.test(opDeSite) && (
+      {!bewerken && !opmaken && opDeSite && /^https:\/\//.test(opDeSite) && (
         <div className="mediaveld-voorbeeld afbeelding-voorbeelden">
           <figure>
             <figcaption>{tu.opDeSite}</figcaption>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={opDeSite} alt={t.voorbeeld} className="voorbeeld-169" crossOrigin="anonymous" />
           </figure>
-          {uitsnedeUrl && toonOrigineel && (
+          {(uitsnedeUrl || opmaakUrl) && toonOrigineel && (
             <figure>
               <figcaption>{tu.origineel}</figcaption>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={toonOrigineel} alt={tu.origineel} crossOrigin={isEigen(toonOrigineel) ? "anonymous" : undefined} />
             </figure>
           )}
-          {uitsnedeUrl && <small className="uitleg">{tu.origineelBewaard}</small>}
+          {(uitsnedeUrl || opmaakUrl) && <small className="uitleg">{tu.origineelBewaard}</small>}
           {bron && (
             <small className="uitleg">
               {tu.bron}:{" "}
@@ -348,9 +424,27 @@ export default function Afbeeldingveld({
             </small>
           )}
           <div className="beheer-knoppen">
+            <button type="button" onClick={startOpmaken} disabled={!!bezig}>
+              {opmaakUrl ? tm.aanpassen : tm.maken}
+            </button>
             <button type="button" onClick={startBijsnijden} disabled={!!bezig}>
               {uitsnedeUrl ? tu.aanpassen : tu.bijsnijden}
             </button>
+            {opmaakUrl && (
+              <button
+                type="button"
+                className="knop-link"
+                onClick={() => {
+                  zetOpmaakUrl("");
+                  zetOpmaak(null);
+                  zetUitsnedeUrl("");
+                  zetKader(null);
+                  zetCrop(undefined);
+                }}
+              >
+                {tm.weghalen}
+              </button>
+            )}
             {uitsnedeUrl && (
               <button
                 type="button"

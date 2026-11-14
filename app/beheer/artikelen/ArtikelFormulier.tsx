@@ -190,6 +190,7 @@ export default function ArtikelFormulier({
               waarden={gegevens.afbeelding}
               t={f}
               tu={t.uitsnede}
+              tm={t.opmaak}
               supabaseUrl={supabaseUrl}
               supabaseSleutel={supabaseSleutel}
             />

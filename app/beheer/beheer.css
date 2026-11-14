@@ -959,3 +959,120 @@ line.stat-raster {
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25) inset;
   pointer-events: none;
 }
+
+/* Nieuwe 16:9-foto maken (W-ADM-23) */
+.opmaak {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: var(--wit);
+}
+
+/* Ruimte rond het vlak, zodat je ook ziet (donker) wat erbuiten valt. */
+.opmaak-werkvlak {
+  padding: 8% 12%;
+  background: #2b2b2b;
+  border-radius: 4px;
+  overflow: hidden;
+  touch-action: none;
+  user-select: none;
+}
+
+.opmaak-vlak {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  width: 100%;
+  outline: 2px solid #fff;
+}
+
+.opmaak-vervaagd {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: blur(18px) brightness(0.85);
+  overflow: hidden;
+  clip-path: inset(0);
+}
+
+.opmaak-foto {
+  position: absolute;
+  max-width: none;
+  max-height: none;
+  pointer-events: none;
+}
+
+/* Alles buiten het vlak donker maken. */
+.opmaak-masker {
+  position: absolute;
+  inset: 0;
+  box-shadow: 0 0 0 100vmax rgba(43, 43, 43, 0.6);
+  pointer-events: none;
+}
+
+.opmaak-greep {
+  position: absolute;
+  border: 1px dashed #fff;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4);
+  cursor: move;
+}
+
+.opmaak-greep:focus-visible {
+  outline: 2px solid var(--oranje, #faa634);
+}
+
+.opmaak-hoek {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  background: #fff;
+  border: 1px solid #333;
+}
+
+.opmaak-hoek.nw { left: -7px; top: -7px; cursor: nwse-resize; }
+.opmaak-hoek.ne { right: -7px; top: -7px; cursor: nesw-resize; }
+.opmaak-hoek.sw { left: -7px; bottom: -7px; cursor: nesw-resize; }
+.opmaak-hoek.se { right: -7px; bottom: -7px; cursor: nwse-resize; }
+
+.opmaak-knoppen,
+.opmaak-achtergrond {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  align-items: center;
+}
+
+.opmaak-getallen {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 8px;
+}
+
+.opmaak-getallen input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.opmaak .knop-klein {
+  padding: 4px 10px;
+  font-size: 0.9rem;
+}
+
+.opmaak-staal {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid #999;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.opmaak input[type="color"] {
+  width: 36px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid #999;
+}

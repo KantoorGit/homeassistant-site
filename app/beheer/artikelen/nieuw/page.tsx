@@ -44,7 +44,7 @@ export default async function NieuwArtikel() {
           status: "concept",
           gepubliceerdOp: "",
           positie: null,
-          afbeelding: { afbeeldingUrl: "", origineelUrl: "", bronUrl: "", uitsnede: null },
+          afbeelding: { afbeeldingUrl: "", origineelUrl: "", bronUrl: "", uitsnede: null, opmaakUrl: "", opmaak: null },
           videoUrl: "",
           teksten: {},
           vertaalinfo: {},
