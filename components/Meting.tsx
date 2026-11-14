@@ -9,7 +9,7 @@ import {
   type Gebeurtenis,
   type Verzending,
 } from "@/lib/meting/instellingen";
-import { isTaal, vindCategorie, type Taal } from "@/lib/site";
+import { isTaal, vindCategorie, type Categorie, type Taal } from "@/lib/site";
 
 // Meetscript (hoofdstuk 10, W-ANA-30 t/m -39). Klein en op de achtergrond:
 // gebeurtenissen gaan in een wachtrij en worden in één keer verstuurd.
@@ -92,7 +92,7 @@ type Pagina = {
   artikel_id?: string;
 };
 
-function bepaalPagina(pad: string): Pagina {
+function bepaalPagina(pad: string, categorieen: Categorie[]): Pagina {
   const delen = pad.split("/").filter(Boolean);
   const taal = isTaal(delen[0]) ? delen[0] : "nl";
   const rest = delen.slice(1);
@@ -103,7 +103,7 @@ function bepaalPagina(pad: string): Pagina {
   if (rest[0] === "forum") return { ...basis, paginatype: "forum", categorie: "forum" };
   if (rest[0] === "account") return { ...basis, paginatype: "account" };
   if (rest[0] === "privacy") return { ...basis, paginatype: "privacy" };
-  const categorie = vindCategorie(taal, rest[0]);
+  const categorie = vindCategorie(categorieen, taal, rest[0])?.categorie;
   if (!categorie) return { ...basis, paginatype: "overig" };
   if (rest.length === 1) return { ...basis, paginatype: "categorie", categorie: categorie.id };
   return {
@@ -128,8 +128,12 @@ function plekVan(el: Element): string {
   return "pagina";
 }
 
-export default function Meting({ taal }: { taal: Taal }) {
+export default function Meting({ taal, categorieen }: { taal: Taal; categorieen: Categorie[] }) {
   const pad = usePathname();
+  const categorieLijst = useRef(categorieen);
+  useEffect(() => {
+    categorieLijst.current = categorieen;
+  }, [categorieen]);
   const huidig = useRef<Pagina | null>(null);
   const actief = useRef({ sinds: 0, opgeteld: 0 });
   const scroll = useRef(new Set<number>());
@@ -158,7 +162,7 @@ export default function Meting({ taal }: { taal: Taal }) {
     snelheidInWachtrij();
     scroll.current = new Set();
     const timer = setTimeout(() => {
-      const pagina = bepaalPagina(pad);
+      const pagina = bepaalPagina(pad, categorieLijst.current);
       huidig.current = pagina;
       actief.current = {
         sinds: document.visibilityState === "visible" ? Date.now() : 0,
@@ -323,6 +327,37 @@ export default function Meting({ taal }: { taal: Taal }) {
     return () => {
       window.removeEventListener("message", bericht);
       clearInterval(timer);
+    };
+  }, [pad]);
+
+  // Eigen videobestanden (<video>): start, 25/50/75% en uitgekeken.
+  useEffect(() => {
+    const gemeld = new Map<string, Set<number>>();
+    function opVoortgang(e: Event) {
+      const el = e.target;
+      if (!(el instanceof HTMLVideoElement) || !el.dataset.metingVideo) return;
+      const video = el.dataset.metingVideo;
+      const al = gemeld.get(video) ?? new Set<number>();
+      gemeld.set(video, al);
+      const meld = (waarde: number) => {
+        if (al.has(waarde)) return;
+        al.add(waarde);
+        meet({ type: "video", pad: huidig.current?.pad, naam: video, waarde });
+      };
+      if (e.type === "play") meld(0);
+      if (e.type === "ended") meld(100);
+      if (e.type === "timeupdate" && el.duration) {
+        const pct = (el.currentTime / el.duration) * 100;
+        for (const d of [25, 50, 75]) if (pct >= d) meld(d);
+      }
+    }
+    for (const type of ["play", "ended", "timeupdate"]) {
+      document.addEventListener(type, opVoortgang, true);
+    }
+    return () => {
+      for (const type of ["play", "ended", "timeupdate"]) {
+        document.removeEventListener(type, opVoortgang, true);
+      }
     };
   }, [pad]);
 

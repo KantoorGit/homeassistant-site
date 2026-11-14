@@ -2,11 +2,14 @@
 
 import { updateTag } from "next/cache";
 import { redirect } from "next/navigation";
-import { kiesbareCategorieen } from "@/lib/beheer/artikelen";
-import { amsterdamNaarIso, maakSlug, youtubeId } from "@/lib/beheer/hulp";
+import { amsterdamNaarIso, maakSlug } from "@/lib/beheer/hulp";
 import { maakSessieClient } from "@/lib/beheer/supabase-sessie";
+import { beheerT } from "@/lib/beheer/taal";
+import { vul } from "@/lib/beheer/teksten";
 import { vereisRedacteur } from "@/lib/beheer/toegang";
+import { haalAlleCategorieen, plaatsbaar } from "@/lib/categorieen";
 import { isTaal, talen } from "@/lib/site";
+import { videoInfo } from "@/lib/video";
 
 export type Staat = { fout?: string; melding?: string } | undefined;
 
@@ -18,10 +21,11 @@ function tekst(formData: FormData, naam: string): string {
 // ---------------------------------------------------------------- Inloggen
 
 export async function inloggen(_: Staat, formData: FormData): Promise<Staat> {
+  const { t } = await beheerT();
   const email = tekst(formData, "email");
   const wachtwoord = formData.get("wachtwoord");
   if (!email || typeof wachtwoord !== "string" || !wachtwoord) {
-    return { fout: "Vul je e-mailadres en wachtwoord in." };
+    return { fout: t.inloggen.foutLeeg };
   }
   const supabase = await maakSessieClient();
   const { error } = await supabase.auth.signInWithPassword({
@@ -29,10 +33,8 @@ export async function inloggen(_: Staat, formData: FormData): Promise<Staat> {
     password: wachtwoord,
   });
   if (error) {
-    if (error.status === 429) {
-      return { fout: "Te veel pogingen. Wacht even en probeer het opnieuw." };
-    }
-    return { fout: "E-mailadres of wachtwoord klopt niet." };
+    if (error.status === 429) return { fout: t.inloggen.foutTeVeel };
+    return { fout: t.inloggen.foutOnjuist };
   }
   redirect("/beheer/2fa");
 }
@@ -69,23 +71,23 @@ export async function start2fa(): Promise<Koppeling> {
     friendlyName: `Beheer ${new Date().toISOString().slice(0, 16)}`,
   });
   if (error || !data) {
-    return { fout: `Koppelen lukt niet: ${error?.message ?? "onbekend"}` };
+    const { t } = await beheerT();
+    return { fout: vul(t.tweefa.foutKoppelen, { fout: error?.message ?? "?" }) };
   }
   return { factorId: data.id, qr: data.totp.qr_code, geheim: data.totp.secret };
 }
 
 async function verifieer(factorId: string, code: string): Promise<Staat> {
-  if (!/^\d{6}$/.test(code)) return { fout: "Vul de 6 cijfers uit de app in." };
+  const { t } = await beheerT();
+  if (!/^\d{6}$/.test(code)) return { fout: t.tweefa.fout6 };
   const supabase = await maakSessieClient();
   const { error } = await supabase.auth.mfa.challengeAndVerify({
     factorId,
     code,
   });
   if (error) {
-    if (error.status === 429) {
-      return { fout: "Te veel pogingen. Wacht even en probeer het opnieuw." };
-    }
-    return { fout: "Deze code klopt niet of is verlopen. Probeer de volgende." };
+    if (error.status === 429) return { fout: t.inloggen.foutTeVeel };
+    return { fout: t.tweefa.foutCode };
   }
   redirect("/beheer");
 }
@@ -117,6 +119,8 @@ export async function artikelOpslaan(
   formData: FormData,
 ): Promise<Staat> {
   const { supabase, redacteur } = await vereisRedacteur();
+  const { t: alle } = await beheerT();
+  const t = alle.fouten;
 
   const id = tekst(formData, "id") || null;
   const categorie = tekst(formData, "categorie");
@@ -126,21 +130,32 @@ export async function artikelOpslaan(
   const videoUrl = tekst(formData, "video_url") || null;
   const afbeeldingUrl = tekst(formData, "afbeelding_url") || null;
 
-  if (!kiesbareCategorieen.some((c) => c.id === categorie)) {
-    return { fout: "Kies een categorie." };
+  // Een actieve categorie, of de (inmiddels verwijderde) categorie die het
+  // artikel al had: die blijft bewaard (W-ADM-14).
+  const huidigeCategorie = tekst(formData, "huidige_categorie");
+  const kiesbaar = plaatsbaar(await haalAlleCategorieen()).filter((c) => !c.verwijderd);
+  if (!kiesbaar.some((c) => c.id === categorie) && !(id && categorie && categorie === huidigeCategorie)) {
+    return { fout: t.kiesCategorie };
   }
   if (!isTaal(origineleTaal) || !redacteur.talen.includes(origineleTaal)) {
-    return { fout: "Je mag niet schrijven in de gekozen originele taal." };
+    return { fout: t.geenTaalRecht };
   }
   if (!tekst(formData, `kop_${origineleTaal}`)) {
-    return { fout: "Vul de kop in de originele taal in." };
+    return { fout: t.kopOntbreekt };
   }
-  if (videoUrl && !youtubeId(videoUrl)) {
-    return { fout: "Het video-adres is geen geldig YouTube-adres." };
+  if (videoUrl && !videoInfo(videoUrl)) {
+    return { fout: t.videoOngeldig };
   }
   if (afbeeldingUrl && !/^https:\/\/\S+$/.test(afbeeldingUrl)) {
-    return { fout: "Het adres van de afbeelding moet met https:// beginnen." };
+    return { fout: t.afbeeldingHttps };
   }
+  // Plek op de voorpagina (W-ADM-17): leeg = geen vaste plek, 1 = groot
+  // bovenaan, 2-7 = de zes plekken eronder.
+  const positieTekst = tekst(formData, "positie");
+  const positie = /^[1-7]$/.test(positieTekst) ? Number(positieTekst) : null;
+  const huidigePositie = /^[1-7]$/.test(tekst(formData, "huidige_positie"))
+    ? Number(tekst(formData, "huidige_positie"))
+    : null;
 
   let gepubliceerdOp = amsterdamNaarIso(tekst(formData, "gepubliceerd_op"));
   if (status === "gepubliceerd" && !gepubliceerdOp) {
@@ -156,7 +171,6 @@ export async function artikelOpslaan(
     video_url: videoUrl,
     status,
     gepubliceerd_op: gepubliceerdOp,
-    uitgelicht: formData.get("uitgelicht") === "aan",
     bijgewerkt: nu,
     bijgewerkt_door: redacteur.id,
   };
@@ -167,7 +181,7 @@ export async function artikelOpslaan(
       .from("artikelen")
       .update(gegevens)
       .eq("id", artikelId);
-    if (error) return { fout: `Opslaan mislukt: ${error.message}` };
+    if (error) return { fout: vul(t.opslaanMislukt, { fout: error.message }) };
   } else {
     const { data, error } = await supabase
       .from("artikelen")
@@ -175,7 +189,7 @@ export async function artikelOpslaan(
       .select("id")
       .single();
     if (error || !data) {
-      return { fout: `Opslaan mislukt: ${error?.message ?? "onbekend"}` };
+      return { fout: vul(t.opslaanMislukt, { fout: error?.message ?? "?" }) };
     }
     artikelId = data.id as string;
   }
@@ -219,7 +233,7 @@ export async function artikelOpslaan(
     const intro = tekst(formData, `intro_${taal}`);
     const tekstVeld = tekst(formData, `tekst_${taal}`);
     const slug = maakSlug(tekst(formData, `slug_${taal}`) || kop) || oud?.slug || "";
-    if (!slug) return { fout: `Het webadres (${taal}) is leeg.` };
+    if (!slug) return { fout: vul(t.slugLeeg, { taal }) };
     if (oud && oud.kop === kop && oud.intro === intro && oud.tekst === tekstVeld && oud.slug === slug) {
       continue;
     }
@@ -241,11 +255,26 @@ export async function artikelOpslaan(
       if (!id) await supabase.from("artikelen").delete().eq("id", artikelId);
       updateTag("artikelen");
       if (error.code === "23505") {
-        return {
-          fout: `Het webadres "${slug}" (${taal}) bestaat al bij een ander artikel. Kies een ander webadres.`,
-        };
+        return { fout: vul(t.slugBestaat, { slug, taal }) };
       }
-      return { fout: `Opslaan van de tekst (${taal}) mislukt: ${error.message}` };
+      return { fout: vul(t.tekstMislukt, { taal, fout: error.message }) };
+    }
+  }
+
+  // Plek op de voorpagina. Een plek die al bezet is, gaat over naar dit
+  // artikel. Zolang supabase/007 niet is uitgevoerd: alleen 'uitgelicht'.
+  let plekFout = "";
+  if (positie !== huidigePositie || (!id && positie !== null)) {
+    const { error } = await supabase.rpc("zet_artikel_positie", {
+      p_artikel: artikelId,
+      p_positie: positie,
+    });
+    if (error) {
+      if (/zet_artikel_positie|schema cache|does not exist/i.test(error.message)) {
+        await supabase.from("artikelen").update({ uitgelicht: positie === 1 }).eq("id", artikelId);
+      } else {
+        plekFout = error.message;
+      }
     }
   }
 
@@ -267,7 +296,11 @@ export async function artikelOpslaan(
   }
 
   updateTag("artikelen");
-  redirect(`/beheer/artikelen/${artikelId}?opgeslagen=1${vertaald ? `&vertaald=${vertaald}` : ""}`);
+  redirect(
+    `/beheer/artikelen/${artikelId}?opgeslagen=1${vertaald ? `&vertaald=${vertaald}` : ""}${
+      plekFout ? `&plekfout=${encodeURIComponent(plekFout)}` : ""
+    }`,
+  );
 }
 
 export async function artikelVerwijderen(formData: FormData) {
@@ -282,9 +315,10 @@ export async function artikelVerwijderen(formData: FormData) {
 // "Vertalen naar andere talen" bij een bestaand artikel (W-TAAL-14, -15).
 export async function artikelVertalen(_: Staat, formData: FormData): Promise<Staat> {
   const { supabase } = await vereisRedacteur();
+  const { t } = await beheerT();
   const id = tekst(formData, "id");
   const gekozen = formData.getAll("vertaal").filter(isTaal);
-  if (!id || gekozen.length === 0) return { fout: "Kies minstens één taal." };
+  if (!id || gekozen.length === 0) return { fout: t.vertaalpaneel.kiesTaal };
   const { data, error } = await supabase.rpc("vertaal_artikel", {
     p_artikel: id,
     p_talen: gekozen,
@@ -292,9 +326,9 @@ export async function artikelVertalen(_: Staat, formData: FormData): Promise<Sta
   });
   if (error) {
     if (/vertaal_artikel|schema cache|does not exist/i.test(error.message)) {
-      return { fout: "Vertalen is nog niet klaar: voer eerst supabase/006_vertalen.sql uit." };
+      return { fout: t.fouten.vertalenNietKlaar };
     }
-    return { fout: `Vertalen aanvragen mislukt: ${error.message}` };
+    return { fout: vul(t.fouten.vertalenMislukt, { fout: error.message }) };
   }
   const n = typeof data === "number" ? data : 0;
   redirect(`/beheer/artikelen/${id}?vertaald=${n}`);

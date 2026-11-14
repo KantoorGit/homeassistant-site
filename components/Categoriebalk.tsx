@@ -2,9 +2,17 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { categorieen, categoriePad, teksten, type Taal } from "@/lib/site";
+import { categoriePad, teksten, type Categorie, type Taal } from "@/lib/site";
 
-export default function Categoriebalk({ taal }: { taal: Taal }) {
+// De categorieën komen uit de database (beheerpaneel, W-ADM-07), in de
+// volgorde die daar is ingesteld; Overig en Forum staan altijd achteraan.
+export default function Categoriebalk({
+  taal,
+  categorieen,
+}: {
+  taal: Taal;
+  categorieen: Categorie[];
+}) {
   const pad = usePathname();
 
   return (

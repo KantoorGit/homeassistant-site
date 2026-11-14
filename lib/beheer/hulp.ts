@@ -1,5 +1,8 @@
 // Kleine hulpfuncties voor het beheerpaneel.
 
+import type { Taal } from "@/lib/site";
+import { landcode } from "./teksten";
+
 const tijdzone = "Europe/Amsterdam";
 
 // Verschil tussen Amsterdamse tijd en UTC (in minuten) op een bepaald moment.
@@ -47,9 +50,9 @@ export function isoNaarAmsterdam(iso: string | null): string {
   return lokaal.toISOString().slice(0, 16);
 }
 
-export function tijdTekst(iso: string | null): string {
+export function tijdTekst(iso: string | null, taal: Taal = "nl"): string {
   if (!iso) return "";
-  return new Intl.DateTimeFormat("nl", {
+  return new Intl.DateTimeFormat(landcode[taal], {
     dateStyle: "medium",
     timeStyle: "short",
     timeZone: tijdzone,
@@ -69,23 +72,5 @@ export function maakSlug(tekst: string): string {
     .replace(/-+$/g, "");
 }
 
-// Haalt de video-code uit een YouTube-adres (watch, youtu.be, shorts, embed).
-export function youtubeId(adres: string | null | undefined): string | null {
-  if (!adres) return null;
-  try {
-    const url = new URL(adres.trim());
-    const host = url.hostname.replace(/^www\.|^m\./, "");
-    let id: string | null = null;
-    if (host === "youtu.be") id = url.pathname.slice(1);
-    else if (host === "youtube.com" || host === "youtube-nocookie.com") {
-      if (url.pathname === "/watch") id = url.searchParams.get("v");
-      else {
-        const m = /^\/(?:embed|shorts|live)\/([^/?#]+)/.exec(url.pathname);
-        id = m?.[1] ?? null;
-      }
-    }
-    return id && /^[A-Za-z0-9_-]{6,20}$/.test(id) ? id : null;
-  } catch {
-    return null;
-  }
-}
+// Video-adressen: zie lib/video.ts.
+export { videoInfo, youtubeId } from "@/lib/video";

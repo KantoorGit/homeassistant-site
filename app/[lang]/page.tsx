@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import Artikelkaart from "@/components/Artikelkaart";
-import { artikelPad, getArtikelen, tijdVan } from "@/lib/artikelen";
+import { artikelPad, getArtikelen, tijdVan, verdeelVoorpagina } from "@/lib/artikelen";
 import type { Metadata } from "next";
 import { zelfdePadAlternatieven } from "@/lib/hreflang";
 import { isTaal, teksten } from "@/lib/site";
@@ -21,9 +21,9 @@ export default async function Voorpagina({ params }: PageProps<"/[lang]">) {
   if (!isTaal(lang)) notFound();
   const t = teksten[lang];
   const artikelen = await getArtikelen(lang);
-  // Hoofdartikel: het nieuwste uitgelichte artikel, anders het nieuwste.
-  const hoofdartikel = artikelen.find((a) => a.uitgelicht) ?? artikelen[0];
-  const overige = artikelen.filter((a) => a !== hoofdartikel);
+  // Hoofdartikel en raster volgens de vaste plekken uit het beheerpaneel
+  // (W-ADM-17); lege plekken krijgen het nieuwste artikel.
+  const { hoofdartikel, raster } = verdeelVoorpagina(artikelen);
 
   if (!hoofdartikel) return <p className="leeg">{t.nogLeeg}</p>;
 
@@ -32,7 +32,7 @@ export default async function Voorpagina({ params }: PageProps<"/[lang]">) {
       <div className="hoofdkolom">
         <Artikelkaart artikel={hoofdartikel} groot />
         <div className="raster">
-          {overige.slice(0, 9).map((artikel) => (
+          {raster.map((artikel) => (
             <Artikelkaart key={artikel.id} artikel={artikel} />
           ))}
         </div>

@@ -1,15 +1,14 @@
+import { beheerT } from "@/lib/beheer/taal";
 import { uitloggen } from "../acties";
 
-export default function GeenToegang() {
+export default async function GeenToegang() {
+  const { t } = await beheerT();
   return (
     <section className="beheer-smal">
-      <h1>Geen toegang</h1>
-      <p>
-        Je bent ingelogd, maar je account heeft (nog) niet de rol redacteur of
-        beheerder. Vraag de beheerder om je deze rol te geven.
-      </p>
+      <h1>{t.geenToegang.titel}</h1>
+      <p>{t.geenToegang.uitleg}</p>
       <form action={uitloggen}>
-        <button type="submit">Uitloggen</button>
+        <button type="submit">{t.algemeen.uitloggen}</button>
       </form>
     </section>
   );
