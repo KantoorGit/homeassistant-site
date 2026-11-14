@@ -1,19 +1,27 @@
 import { cacheLife, cacheTag } from "next/cache";
 import voorbeelden from "./voorbeeldartikelen.json";
-import { categorieen, isTaal, type Taal } from "./site";
+import { haalAlleCategorieen } from "./categorieen";
+import { categorieVanArtikel, isTaal, type Categorie, type Taal } from "./site";
 import { maakSupabaseClient } from "./supabase";
 
 // Een artikel zoals de pagina's het gebruiken: in één taal.
 export type Artikel = {
   id: string;
+  // De categorie die bij het artikel is opgeslagen. Ook na het verwijderen
+  // van die categorie blijft dit staan (W-ADM-14).
   categorieId: string;
+  // De categorie waaronder het artikel op de site staat: de eigen
+  // categorie, of "Overig" als die verwijderd is.
+  categorie: Categorie;
   gepubliceerdOp: string;
   origineleTaal: Taal;
   auteur: string;
   afbeeldingUrl: string | null;
   videoUrl: string | null;
-  // Staat groot bovenaan de voorpagina.
+  // Staat groot bovenaan de voorpagina (oud; vervangen door positie 1).
   uitgelicht: boolean;
+  // Vaste plek op de voorpagina: 1 = groot bovenaan, 2-7 = raster (W-ADM-17).
+  positie: number | null;
   isVoorbeeld: boolean;
   taal: Taal;
   slug: string;
@@ -48,6 +56,8 @@ type ArtikelRij = {
   // Komen uit supabase/003_beheer.sql; ontbreken zolang dat niet is uitgevoerd.
   video_url?: string | null;
   uitgelicht?: boolean;
+  // Uit supabase/007_…sql.
+  positie?: number | null;
   gepubliceerd_op: string;
   is_voorbeeld: boolean;
   artikel_vertalingen: VertalingRij[];
@@ -58,7 +68,7 @@ type ArtikelRij = {
 const kolommen =
   "*, artikel_vertalingen(taal, slug, kop, intro, tekst, automatisch_vertaald)";
 
-function naarArtikel(rij: ArtikelRij, taal: Taal): Artikel | null {
+function naarArtikel(rij: ArtikelRij, taal: Taal, categorieen: Categorie[]): Artikel | null {
   const origineleTaal = isTaal(rij.originele_taal) ? rij.originele_taal : taal;
   const eigen = rij.artikel_vertalingen.find((v) => v.taal === taal);
   const vertaling =
@@ -71,12 +81,14 @@ function naarArtikel(rij: ArtikelRij, taal: Taal): Artikel | null {
   return {
     id: rij.id,
     categorieId: rij.categorie_id,
+    categorie: categorieVanArtikel(categorieen, rij.categorie_id),
     gepubliceerdOp: rij.gepubliceerd_op,
     origineleTaal,
     auteur: rij.auteur,
     afbeeldingUrl: rij.afbeelding_url,
     videoUrl: rij.video_url ?? null,
     uitgelicht: rij.uitgelicht ?? false,
+    positie: rij.positie !== undefined ? rij.positie : rij.uitgelicht ? 1 : null,
     isVoorbeeld: rij.is_voorbeeld,
     taal,
     slug: vertaling.slug,
@@ -139,9 +151,9 @@ async function haalRijen(): Promise<ArtikelRij[]> {
 }
 
 export async function getArtikelen(taal: Taal): Promise<Artikel[]> {
-  const rijen = await haalRijen();
+  const [rijen, categorieen] = await Promise.all([haalRijen(), haalAlleCategorieen()]);
   return rijen
-    .map((rij) => naarArtikel(rij, taal))
+    .map((rij) => naarArtikel(rij, taal, categorieen))
     .filter((a): a is Artikel => a !== null);
 }
 
@@ -152,24 +164,24 @@ export async function getArtikel(
   taal: Taal,
   slug: string,
 ): Promise<Artikel | null> {
-  const rijen = await haalRijen();
+  const [rijen, categorieen] = await Promise.all([haalRijen(), haalAlleCategorieen()]);
   const rij =
     rijen.find((r) =>
       r.artikel_vertalingen.some((v) => v.taal === taal && v.slug === slug),
     ) ?? rijen.find((r) => r.artikel_vertalingen.some((v) => v.slug === slug));
-  return rij ? naarArtikel(rij, taal) : null;
+  return rij ? naarArtikel(rij, taal, categorieen) : null;
 }
 
 // Adres van een artikel in een taal. Is het artikel in die taal nog niet
 // vertaald, dan krijgt het adres het webadres van het origineel.
 export function artikelPad(
-  artikel: Pick<Artikel, "categorieId" | "slugPerTaal" | "origineleTaal">,
+  artikel: Pick<Artikel, "categorie" | "slugPerTaal" | "origineleTaal">,
   taal: Taal,
 ): string | null {
   const slug =
     artikel.slugPerTaal[taal] ?? artikel.slugPerTaal[artikel.origineleTaal];
-  const categorie = categorieen.find((c) => c.id === artikel.categorieId);
-  if (!slug || !categorie || !categorie.slug[taal]) return null;
+  const categorie = artikel.categorie;
+  if (!slug || !categorie.slug[taal]) return null;
   return `/${taal}/${categorie.slug[taal]}/${slug}`;
 }
 
@@ -207,4 +219,30 @@ export async function controleerArtikelen(): Promise<
     .overrideTypes<ArtikelRij[], { merge: false }>();
   if (error) return { aantal: 0, fout: error.message, code: error.code ?? "" };
   return { aantal: data?.length ?? 0, fout: null };
+}
+
+// Verdeelt de artikelen over de voorpagina (W-ADM-17): plek 1 is het grote
+// hoofdartikel, plek 2 t/m 7 de zes kaarten eronder (twee rijen van drie).
+// Een artikel met een vaste plek staat daar; lege plekken worden gevuld met
+// de nieuwste overige artikelen. Daarna volgen nog 'extra' kaarten.
+export function verdeelVoorpagina(
+  artikelen: Artikel[],
+  extra = 3,
+): { hoofdartikel: Artikel | undefined; raster: Artikel[] } {
+  const plekken: (Artikel | undefined)[] = Array(8).fill(undefined);
+  const geplaatst = new Set<string>();
+  for (const a of artikelen) {
+    if (a.positie && a.positie >= 1 && a.positie <= 7 && !plekken[a.positie]) {
+      plekken[a.positie] = a;
+      geplaatst.add(a.id);
+    }
+  }
+  const rest = artikelen.filter((a) => !geplaatst.has(a.id));
+  for (let p = 1; p <= 7; p++) {
+    if (!plekken[p]) plekken[p] = rest.shift();
+  }
+  const raster = [...plekken.slice(2), ...rest.slice(0, extra)].filter(
+    (a): a is Artikel => a !== undefined,
+  );
+  return { hoofdartikel: plekken[1], raster };
 }

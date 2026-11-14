@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { artikelPad, type Artikel } from "@/lib/artikelen";
-import { youtubeId } from "@/lib/beheer/hulp";
-import { categorieen, taalCode, teksten } from "@/lib/site";
+import { taalCode, teksten } from "@/lib/site";
+import { videoInfo } from "@/lib/video";
 
 // Kaart met beeldvlak, categorie-label en kop. Zolang er geen foto's zijn,
 // toont het beeldvlak een kleurvlak in de huisstijl.
@@ -13,14 +13,13 @@ export default function Artikelkaart({
   groot?: boolean;
 }) {
   const taal = artikel.taal;
-  const categorie = categorieen.find((c) => c.id === artikel.categorieId);
+  const categorie = artikel.categorie;
   const pad = artikelPad(artikel, taal);
   const Kop = groot ? "h1" : "h2";
-  // Eigen afbeelding; anders bij een video de stilstaande beelden van YouTube.
-  const video = youtubeId(artikel.videoUrl);
-  const beeld =
-    artikel.afbeeldingUrl ??
-    (video ? `https://i.ytimg.com/vi/${video}/hqdefault.jpg` : null);
+  // Eigen afbeelding; anders bij een YouTube-video de stilstaande beelden
+  // van YouTube. Bij andere video's een kleurvlak met afspeelknop.
+  const video = videoInfo(artikel.videoUrl);
+  const beeld = artikel.afbeeldingUrl ?? video?.miniatuur ?? null;
 
   return (
     <article
@@ -36,7 +35,7 @@ export default function Artikelkaart({
         {artikel.isVoorbeeld && <span>{teksten[taal].voorbeeld}</span>}
       </div>
       <div className="kaart-tekst">
-        {categorie && <p className="label">{categorie.naam[taal]}</p>}
+        <p className="label">{categorie.naam[taal]}</p>
         <Kop lang={artikel.nietVertaald ? taalCode[artikel.tekstTaal] : undefined}>
           {pad ? <Link href={pad}>{artikel.kop}</Link> : artikel.kop}
         </Kop>

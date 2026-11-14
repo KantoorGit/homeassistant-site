@@ -1,22 +1,17 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import Artikelkaart from "@/components/Artikelkaart";
 import { getArtikelen } from "@/lib/artikelen";
+import { haalAlleCategorieen, haalCategorieen } from "@/lib/categorieen";
 import { taalAlternatieven } from "@/lib/hreflang";
-import {
-  categorieen,
-  categoriePad,
-  isTaal,
-  talen,
-  teksten,
-  vindCategorie,
-} from "@/lib/site";
+import { categoriePad, isTaal, talen, teksten, vindCategorie } from "@/lib/site";
 
 export async function generateStaticParams() {
+  const categorieen = await haalCategorieen();
   return talen.flatMap((lang) =>
     categorieen
       // Het forum heeft eigen pagina's in app/[lang]/forum.
-      .filter((c) => c.slug[lang] !== "" && c.id !== "forum")
+      .filter((c) => c.slug[lang] !== "" && c.soort !== "forum")
       .map((c) => ({ lang, categorie: c.slug[lang] })),
   );
 }
@@ -26,8 +21,9 @@ export async function generateMetadata({
 }: PageProps<"/[lang]/[categorie]">): Promise<Metadata> {
   const { lang, categorie: slug } = await params;
   if (!isTaal(lang)) return {};
-  const categorie = vindCategorie(lang, slug);
-  if (!categorie) return {};
+  const gevonden = vindCategorie(await haalAlleCategorieen(), lang, slug);
+  if (!gevonden) return {};
+  const categorie = gevonden.categorie;
   return {
     title: categorie.naam[lang],
     alternates: taalAlternatieven(
@@ -37,21 +33,25 @@ export async function generateMetadata({
   };
 }
 
-// Overzichtspagina per categorie (requirement W-LAY-06).
+// Overzichtspagina per categorie (requirement W-LAY-06). "Overig" toont ook
+// de artikelen van verwijderde categorieën (W-ADM-14).
 export default async function Categoriepagina({
   params,
 }: PageProps<"/[lang]/[categorie]">) {
   const { lang, categorie: slug } = await params;
   if (!isTaal(lang)) notFound();
-  const categorie = vindCategorie(lang, slug);
-  if (!categorie) notFound();
+  const gevonden = vindCategorie(await haalAlleCategorieen(), lang, slug);
+  if (!gevonden || gevonden.categorie.soort === "forum") notFound();
+  const categorie = gevonden.categorie;
+  // Oud webadres (na hernoemen): door naar het nieuwe adres.
+  if (gevonden.oud) permanentRedirect(categoriePad(categorie, lang));
 
   const t = teksten[lang];
   const artikelen = await getArtikelen(lang);
   const lijst =
-    categorie.id === "laatste-nieuws"
+    categorie.soort === "laatste-nieuws"
       ? artikelen
-      : artikelen.filter((a) => a.categorieId === categorie.id);
+      : artikelen.filter((a) => a.categorie.id === categorie.id);
 
   return (
     <div className="categoriepagina">

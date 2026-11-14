@@ -34,6 +34,24 @@
   font-size: 0.9rem;
 }
 
+.beheer-kop-rechts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.beheer-taalkiezer a {
+  color: var(--wit);
+  padding: 4px 6px;
+}
+
+.beheer-taalkiezer a[aria-current] {
+  background: var(--oranje);
+  color: var(--blauw);
+}
+
 .beheer-inhoud {
   padding-top: 24px;
   padding-bottom: 64px;
@@ -573,5 +591,300 @@ line.stat-raster {
 @media (max-width: 560px) {
   .stat-raster {
     grid-template-columns: 1fr;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Plek op de voorpagina kiezen (W-ADM-17)                             */
+/* ------------------------------------------------------------------ */
+.velden-rij.publicatie .plekkiezer,
+.velden-rij.beeld {
+  grid-column: 1 / -1;
+}
+
+.plekkiezer {
+  display: grid;
+  gap: 10px;
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+
+.plekkiezer legend {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.plek-voorbeeld {
+  display: grid;
+  grid-template-columns: 3fr 1fr;
+  gap: 10px;
+  max-width: 720px;
+  padding: 12px;
+  background: var(--lichtgrijs);
+  border-radius: 6px;
+}
+
+.plek-hoofdkolom {
+  display: grid;
+  gap: 8px;
+}
+
+.plek-raster {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.formulier label.plek {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 2px;
+  padding: 8px;
+  background: var(--wit);
+  border: 2px dashed #b8bec6;
+  border-radius: 4px;
+  cursor: pointer;
+  min-height: 64px;
+}
+
+.plek-groot {
+  min-height: 120px !important;
+}
+
+.plek input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.plek-titel {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.plek-stand {
+  color: var(--leigrijs);
+  font-size: 0.75rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.plek-bezet {
+  border-style: solid !important;
+  border-color: #b8bec6 !important;
+  background: #f6f7f8 !important;
+}
+
+.plek-gekozen {
+  border: 2px solid var(--blauw) !important;
+  background: #e8ecf8 !important;
+  box-shadow: inset 0 0 0 2px var(--oranje);
+}
+
+.plek:has(input:focus-visible),
+.plek-geen:has(input:focus-visible) {
+  outline: 3px solid var(--oranje);
+  outline-offset: 2px;
+}
+
+.plek-zijkolom {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  background: var(--wit);
+  border-radius: 4px;
+  color: var(--leigrijs);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.plek-zijkolom i {
+  display: block;
+  height: 8px;
+  background: var(--lichtgrijs);
+  border-radius: 2px;
+}
+
+.formulier label.plek-geen {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 720px;
+  padding: 8px 10px;
+  border: 2px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.plek-geen input {
+  width: auto;
+}
+
+.plek-geen.plek-gekozen {
+  box-shadow: none;
+}
+
+@media (max-width: 560px) {
+  .plek-voorbeeld {
+    grid-template-columns: 1fr;
+  }
+  .plek-zijkolom {
+    display: none;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Afbeelding en video: link of upload (W-ADM-18, W-ADM-19)            */
+/* ------------------------------------------------------------------ */
+.velden-rij.beeld {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+}
+
+.velden-rij.beeld legend {
+  grid-column: 1 / -1;
+}
+
+.beeld-blok h3 {
+  margin: 0 0 8px;
+  font-size: 1rem;
+}
+
+.mediaveld {
+  display: grid;
+  gap: 12px;
+}
+
+.mediaveld-upload input[type="file"] {
+  padding: 6px;
+  background: var(--wit);
+}
+
+.mediaveld-voorbeeld {
+  display: grid;
+  gap: 6px;
+  justify-items: start;
+}
+
+.mediaveld-voorbeeld img,
+.mediaveld-voorbeeld video {
+  max-width: 100%;
+  max-height: 200px;
+  border-radius: 4px;
+  background: #000;
+}
+
+/* ------------------------------------------------------------------ */
+/* Categorieën beheren (W-ADM-07)                                      */
+/* ------------------------------------------------------------------ */
+.categorielijst {
+  list-style: none;
+  padding: 0;
+  margin: 16px 0;
+  display: grid;
+  gap: 8px;
+}
+
+.categorie-rij {
+  padding: 12px 16px;
+  background: var(--wit);
+  border-radius: 6px;
+  border-left: 4px solid var(--blauw);
+}
+
+.categorie-net {
+  border-left-color: var(--oranje);
+}
+
+.categorie-weg {
+  border-left-color: #b8bec6;
+  opacity: 0.85;
+}
+
+.categorie-kop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.categorie-adres {
+  margin-left: 8px;
+  font-size: 0.8rem;
+  color: var(--leigrijs);
+}
+
+.categorie-vast {
+  display: block;
+  margin-top: 2px;
+}
+
+.categorie-pijlen {
+  display: flex;
+  gap: 4px;
+}
+
+.knop-pijl {
+  min-width: 36px;
+  padding: 4px 8px;
+  background: var(--lichtgrijs);
+  color: var(--blauw);
+  font-weight: 700;
+}
+
+.knop-pijl:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.categorie-wijzig {
+  margin-top: 8px;
+}
+
+.categorie-wijzig summary {
+  cursor: pointer;
+  color: var(--blauw);
+  font-size: 0.9rem;
+}
+
+.categorie-velden {
+  display: grid;
+  gap: 8px;
+}
+
+.categorie-taal {
+  display: grid;
+  grid-template-columns: 120px 1fr 1fr;
+  gap: 8px;
+  align-items: end;
+}
+
+.categorie-taalnaam {
+  font-weight: 600;
+  padding-bottom: 8px;
+}
+
+.categorie-verwijder {
+  margin-top: 8px;
+}
+
+.categorie-nieuw {
+  padding: 16px;
+  background: var(--wit);
+  border-radius: 6px;
+}
+
+@media (max-width: 640px) {
+  .categorie-taal {
+    grid-template-columns: 1fr;
+  }
+  .categorie-taalnaam {
+    padding-bottom: 0;
   }
 }

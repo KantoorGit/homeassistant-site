@@ -52,22 +52,36 @@ export function isTaal(waarde: unknown): waarde is Taal {
 // functionele cookie: hij onthoudt alleen een voorkeur van de bezoeker.
 export const taalCookie = "taal";
 
-// De categoriebalk (requirement W-LAY-02). "voorpagina" heeft geen eigen
-// slug: die verwijst naar de openingspagina van de taal.
+// De categoriebalk (requirement W-LAY-02). De categorieën staan sinds
+// versie 3 in de database (tabel categorieen, supabase/007_…sql) en worden
+// in het beheerpaneel gewijzigd (W-ADM-07). Deze lijst is de terugval
+// zolang die tabel er niet is. "voorpagina" heeft geen eigen slug: die
+// verwijst naar de openingspagina van de taal.
+export type CategorieSoort = "voorpagina" | "laatste-nieuws" | "gewoon" | "overig" | "forum";
+
 export type Categorie = {
   id: string;
+  soort: CategorieSoort;
   slug: Record<Taal, string>;
   naam: Record<Taal, string>;
+  // Eerdere webadressen; die sturen door naar het huidige adres.
+  vorigeSlugs: Partial<Record<Taal, string[]>>;
+  volgorde: number;
+  verwijderd: boolean;
 };
 
-export const categorieen: Categorie[] = [
+type Basis = Pick<Categorie, "id" | "slug" | "naam"> & { soort?: CategorieSoort };
+
+const basis: Basis[] = [
   {
     id: "voorpagina",
+    soort: "voorpagina",
     slug: { nl: "", en: "", zh: "", fr: "", de: "", es: "" },
     naam: { nl: "Voorpagina", en: "Home", zh: "首页", fr: "Accueil", de: "Startseite", es: "Inicio" },
   },
   {
     id: "laatste-nieuws",
+    soort: "laatste-nieuws",
     slug: { nl: "laatste-nieuws", en: "latest-news", zh: "zuixin", fr: "dernieres-nouvelles", de: "neuigkeiten", es: "ultimas-noticias" },
     naam: { nl: "Laatste nieuws", en: "Latest news", zh: "最新消息", fr: "Dernières nouvelles", de: "Neuigkeiten", es: "Últimas noticias" },
   },
@@ -112,23 +126,60 @@ export const categorieen: Categorie[] = [
     naam: { nl: "Hardware", en: "Hardware", zh: "硬件", fr: "Matériel", de: "Hardware", es: "Hardware" },
   },
   {
+    // Vangt de artikelen op van verwijderde categorieën; staat altijd
+    // vlak vóór het forum.
+    id: "overig",
+    soort: "overig",
+    slug: { nl: "overig", en: "other", zh: "qita", fr: "autres", de: "sonstiges", es: "otros" },
+    naam: { nl: "Overig", en: "Other", zh: "其他", fr: "Autres", de: "Sonstiges", es: "Otros" },
+  },
+  {
     // Het forum heeft in elke taal hetzelfde adres (/<taal>/forum): het is
-    // een vaste map in de code.
+    // een vaste map in de code. Altijd als laatste.
     id: "forum",
+    soort: "forum",
     slug: { nl: "forum", en: "forum", zh: "forum", fr: "forum", de: "forum", es: "forum" },
     naam: { nl: "Forum", en: "Forum", zh: "论坛", fr: "Forum", de: "Forum", es: "Foro" },
   },
 ];
 
-export function categoriePad(categorie: Categorie, taal: Taal): string {
+export const standaardCategorieen: Categorie[] = basis.map((c, i) => ({
+  soort: "gewoon",
+  ...c,
+  vorigeSlugs: {},
+  volgorde: c.soort === "overig" ? 1000 : c.soort === "forum" ? 1001 : i * 10,
+  verwijderd: false,
+}));
+
+export function categoriePad(categorie: Pick<Categorie, "slug">, taal: Taal): string {
   const slug = categorie.slug[taal];
   return slug ? `/${taal}/${slug}` : `/${taal}`;
 }
 
-export function vindCategorie(taal: Taal, slug: string): Categorie | undefined {
-  return categorieen.find((c) => c.slug[taal] !== "" && c.slug[taal] === slug);
+// Zoekt een categorie op het adres. 'oud' = het adres is een eerder webadres
+// (de pagina stuurt dan door). Verwijderde categorieën worden niet gevonden.
+export function vindCategorie(
+  lijst: Categorie[],
+  taal: Taal,
+  slug: string,
+): { categorie: Categorie; oud: boolean } | undefined {
+  const actief = lijst.filter((c) => !c.verwijderd);
+  const nu = actief.find((c) => c.slug[taal] !== "" && c.slug[taal] === slug);
+  if (nu) return { categorie: nu, oud: false };
+  const vroeger = actief.find((c) => c.vorigeSlugs[taal]?.includes(slug));
+  return vroeger ? { categorie: vroeger, oud: true } : undefined;
 }
 
+// De categorie waaronder een artikel op de site staat: de eigen categorie,
+// of "Overig" als die verwijderd (of onbekend) is (W-ADM-14).
+export function categorieVanArtikel(lijst: Categorie[], categorieId: string): Categorie {
+  const eigen = lijst.find((c) => c.id === categorieId);
+  if (eigen && !eigen.verwijderd) return eigen;
+  return (
+    lijst.find((c) => c.soort === "overig") ??
+    standaardCategorieen.find((c) => c.soort === "overig")!
+  );
+}
 
 // Vaste teksten van de interface per taal.
 type SiteTeksten = {

@@ -10,6 +10,7 @@ import Categoriebalk from "@/components/Categoriebalk";
 import Cookiebanner from "@/components/Cookiebanner";
 import CookieInstellingenLink from "@/components/CookieInstellingenLink";
 import Meting from "@/components/Meting";
+import { haalCategorieen } from "@/lib/categorieen";
 import { bannerTeksten } from "@/lib/meting/teksten";
 import { haalActieveTalen } from "@/lib/talen-instelling";
 import Taalkiezer from "@/components/Taalkiezer";
@@ -47,7 +48,7 @@ export default async function RootLayout({
   const { lang } = await params;
   if (!isTaal(lang)) notFound();
   const t = teksten[lang];
-  const actieveTalen = await haalActieveTalen();
+  const [actieveTalen, categorieen] = await Promise.all([haalActieveTalen(), haalCategorieen()]);
 
   return (
     <html lang={taalCode[lang]}>
@@ -59,7 +60,7 @@ export default async function RootLayout({
             </Link>
             <div className="kop-rechts">
               <Suspense>
-                <Taalkiezer taal={lang} actieveTalen={actieveTalen} />
+                <Taalkiezer taal={lang} actieveTalen={actieveTalen} categorieen={categorieen} />
               </Suspense>
               <Suspense>
                 <Accountmenu taal={lang} />
@@ -68,7 +69,7 @@ export default async function RootLayout({
           </div>
         </header>
         <Suspense>
-          <Categoriebalk taal={lang} />
+          <Categoriebalk taal={lang} categorieen={categorieen} />
         </Suspense>
         <main className="inhoud">{children}</main>
         <footer className="voet">
@@ -82,7 +83,7 @@ export default async function RootLayout({
         </footer>
         <Cookiebanner taal={lang} />
         <Suspense>
-          <Meting taal={lang} />
+          <Meting taal={lang} categorieen={categorieen} />
         </Suspense>
       </body>
     </html>
