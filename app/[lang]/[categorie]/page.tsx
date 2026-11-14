@@ -2,7 +2,15 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Artikelkaart from "@/components/Artikelkaart";
 import { getArtikelen } from "@/lib/artikelen";
-import { categorieen, isTaal, talen, teksten, vindCategorie } from "@/lib/site";
+import { taalAlternatieven } from "@/lib/hreflang";
+import {
+  categorieen,
+  categoriePad,
+  isTaal,
+  talen,
+  teksten,
+  vindCategorie,
+} from "@/lib/site";
 
 export async function generateStaticParams() {
   return talen.flatMap((lang) =>
@@ -19,7 +27,14 @@ export async function generateMetadata({
   const { lang, categorie: slug } = await params;
   if (!isTaal(lang)) return {};
   const categorie = vindCategorie(lang, slug);
-  return categorie ? { title: categorie.naam[lang] } : {};
+  if (!categorie) return {};
+  return {
+    title: categorie.naam[lang],
+    alternates: taalAlternatieven(
+      lang,
+      Object.fromEntries(talen.map((t) => [t, categoriePad(categorie, t)])),
+    ),
+  };
 }
 
 // Overzichtspagina per categorie (requirement W-LAY-06).

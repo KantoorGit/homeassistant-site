@@ -1,11 +1,44 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { isTaal, standaardTaal, taalCookie, talen, type Taal } from "./lib/site";
+
+// Taal voor het kale adres "/": eerst de onthouden keuze (cookie), anders
+// de voorkeurstalen van de browser, anders Nederlands (W-TAAL-05).
+function kiesTaal(request: NextRequest): Taal {
+  const onthouden = request.cookies.get(taalCookie)?.value;
+  if (isTaal(onthouden)) return onthouden;
+  const voorkeur = request.headers.get("accept-language") ?? "";
+  const kandidaten = voorkeur
+    .split(",")
+    .map((deel) => {
+      const [code, ...rest] = deel.trim().split(";");
+      const q = rest.find((r) => r.trim().startsWith("q="));
+      return { code: code.toLowerCase(), q: q ? Number(q.trim().slice(2)) || 0 : 1 };
+    })
+    .filter((k) => k.code && k.q > 0)
+    .sort((a, b) => b.q - a.q);
+  for (const { code } of kandidaten) {
+    const basis = code.split("-")[0];
+    if ((talen as readonly string[]).includes(basis)) return basis as Taal;
+  }
+  return standaardTaal;
+}
 
 // Draait vóór elke pagina (website, accountschermen, forum en /beheer).
 // Heeft de bezoeker een Supabase-sessie, dan wordt die hier gecontroleerd en
 // zo nodig vernieuwd, zodat pagina's altijd een geldige sessie zien.
 // Bezoekers zonder sessie merken er niets van.
 export async function proxy(request: NextRequest) {
+  if (request.nextUrl.pathname === "/") {
+    const url = request.nextUrl.clone();
+    url.pathname = `/${kiesTaal(request)}`;
+    const doorsturen = NextResponse.redirect(url, 307);
+    // Per bezoeker verschillend: niet tussen bezoekers delen.
+    doorsturen.headers.set("Vary", "Cookie, Accept-Language");
+    doorsturen.headers.set("Cache-Control", "private, no-store");
+    return doorsturen;
+  }
+
   let antwoord = NextResponse.next({ request });
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;

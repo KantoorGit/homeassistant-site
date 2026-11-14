@@ -11,14 +11,12 @@ import {
   isPostTaal,
   onderwerpen,
   onderwerpPad,
-  postTaalInZin,
-  postTaalNamen,
   type Berichtstatus,
   type PostTaal,
 } from "@/lib/forum";
 import { accountPad } from "@/lib/paden";
 import { huidigeSessie, isModerator, type Rol } from "@/lib/sessie";
-import { isTaal, type Taal } from "@/lib/site";
+import { isTaal, nietVertaaldZin, vertaaldUitZin, type Taal } from "@/lib/site";
 import { maakServerClient } from "@/lib/supabase-server";
 import { ledenTeksten } from "@/lib/teksten-leden";
 import { draadSluiten, meld, modereer, verwijderEigen } from "../../acties";
@@ -189,8 +187,8 @@ function Bericht({
         {origineleTaal !== taal && (
           <span className="label-licht">
             {vertaling
-              ? `${t.forum.automatischVertaald} ${postTaalInZin[taal][origineleTaal]}`
-              : `${t.forum.origineel}: ${postTaalNamen[taal][origineleTaal]} · ${t.forum.nogNietVertaald}`}
+              ? vertaaldUitZin(taal, origineleTaal)
+              : nietVertaaldZin(taal, origineleTaal)}
           </span>
         )}
       </header>

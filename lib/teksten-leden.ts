@@ -1,5 +1,9 @@
 // Vaste teksten voor accounts en forum, per taal.
 import type { Taal } from "./site";
+import { de } from "./teksten-leden/de";
+import { es } from "./teksten-leden/es";
+import { fr } from "./teksten-leden/fr";
+import { zh } from "./teksten-leden/zh";
 
 const nl = {
   // Kopregel
@@ -227,7 +231,7 @@ const nl = {
   } as Record<string, string>,
 };
 
-type Teksten = typeof nl;
+export type Teksten = typeof nl;
 
 const en: Teksten = {
   inloggen: "Sign in",
@@ -440,7 +444,7 @@ const en: Teksten = {
   },
 };
 
-export const ledenTeksten: Record<Taal, Teksten> = { nl, en };
+export const ledenTeksten: Record<Taal, Teksten> = { nl, en, zh, fr, de, es };
 
 // Zet een foutcode uit de database om in een leesbare tekst.
 export function forumFout(taal: Taal, bericht: string | undefined | null): string {

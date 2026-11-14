@@ -2,7 +2,17 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import Artikelkaart from "@/components/Artikelkaart";
 import { artikelPad, getArtikelen, tijdVan } from "@/lib/artikelen";
+import type { Metadata } from "next";
+import { zelfdePadAlternatieven } from "@/lib/hreflang";
 import { isTaal, teksten } from "@/lib/site";
+
+export async function generateMetadata({
+  params,
+}: PageProps<"/[lang]">): Promise<Metadata> {
+  const { lang } = await params;
+  if (!isTaal(lang)) return {};
+  return { alternates: zelfdePadAlternatieven(lang, "") };
+}
 
 // Openingspagina in de opbouw van nos.nl (requirement W-LAY-01):
 // groot hoofdartikel, raster van artikelkaarten en een kolom met het laatste nieuws.

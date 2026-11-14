@@ -12,6 +12,22 @@
     "Noto Sans SC", system-ui, sans-serif;
 }
 
+/* Chinees (W-KWA-02): Roboto heeft geen Chinese tekens. De systeemlettertypen
+   voor vereenvoudigd Chinees worden gebruikt (niets extra te downloaden);
+   koppen blijven schreefloos en iets minder vet. */
+:lang(zh-Hans) {
+  --font-kop: "Roboto Slab Variable", "PingFang SC", "Microsoft YaHei",
+    "Noto Sans SC", "Source Han Sans SC", sans-serif;
+  --font-tekst: "Roboto Variable", "PingFang SC", "Microsoft YaHei",
+    "Noto Sans SC", "Source Han Sans SC", system-ui, sans-serif;
+}
+
+:lang(zh-Hans) h1,
+:lang(zh-Hans) h2 {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -76,11 +92,12 @@ h2 {
 
 .taalkiezer {
   display: flex;
-  gap: 4px;
+  flex-wrap: wrap;
+  gap: 2px;
 }
 
 .taalkiezer a {
-  padding: 6px 10px;
+  padding: 6px 8px;
   border-radius: 4px;
   font-size: 0.9rem;
   text-decoration: none;
@@ -342,6 +359,17 @@ main.inhoud {
 
   .logo {
     font-size: 1.3rem;
+  }
+
+  /* Zes talen naast het logo: op een telefoon de kop in twee regels */
+  .kop-rij {
+    flex-wrap: wrap;
+    padding-block: 8px;
+  }
+
+  .taalkiezer a {
+    padding: 4px 6px;
+    font-size: 0.85rem;
   }
 }
 

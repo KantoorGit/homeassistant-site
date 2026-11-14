@@ -1,3 +1,4 @@
+import { taalAlternatieven } from "@/lib/hreflang";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
@@ -18,7 +19,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!isTaal(lang)) return {};
   const onderwerp = vindOnderwerp(slug);
   return onderwerp
-    ? { title: `${onderwerp.naam[lang]} – Forum`, description: onderwerp.uitleg[lang] }
+    ? {
+        title: `${onderwerp.naam[lang]} – ${ledenTeksten[lang].forum.titel}`,
+        description: onderwerp.uitleg[lang],
+        alternates: taalAlternatieven(
+          lang,
+          Object.fromEntries(talen.map((t) => [t, onderwerpPad(onderwerp, t)])),
+        ),
+      }
     : {};
 }
 

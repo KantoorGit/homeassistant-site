@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { artikelPad, type Artikel } from "@/lib/artikelen";
 import { youtubeId } from "@/lib/beheer/hulp";
-import { categorieen, teksten } from "@/lib/site";
+import { categorieen, taalCode, teksten } from "@/lib/site";
 
 // Kaart met beeldvlak, categorie-label en kop. Zolang er geen foto's zijn,
 // toont het beeldvlak een kleurvlak in de huisstijl.
@@ -34,8 +34,17 @@ export default function Artikelkaart({
       </div>
       <div className="kaart-tekst">
         {categorie && <p className="label">{categorie.naam[taal]}</p>}
-        <Kop>{pad ? <Link href={pad}>{artikel.kop}</Link> : artikel.kop}</Kop>
-        {groot && <p className="intro">{artikel.intro}</p>}
+        <Kop lang={artikel.nietVertaald ? taalCode[artikel.tekstTaal] : undefined}>
+          {pad ? <Link href={pad}>{artikel.kop}</Link> : artikel.kop}
+        </Kop>
+        {groot && (
+          <p
+            className="intro"
+            lang={artikel.nietVertaald ? taalCode[artikel.tekstTaal] : undefined}
+          >
+            {artikel.intro}
+          </p>
+        )}
       </div>
     </article>
   );

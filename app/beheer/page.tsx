@@ -2,7 +2,7 @@ import Link from "next/link";
 import { alleArtikelen, kopVan } from "@/lib/beheer/artikelen";
 import { tijdTekst } from "@/lib/beheer/hulp";
 import { vereisRedacteur } from "@/lib/beheer/toegang";
-import { categorieen, taalNamen } from "@/lib/site";
+import { categorieen, teksten } from "@/lib/site";
 import { uitloggen } from "./acties";
 
 function statusVan(status: string, gepubliceerdOp: string | null) {
@@ -27,7 +27,7 @@ export default async function Beheeroverzicht({
           <h1>Artikelen</h1>
           <p className="beheer-wie">
             Ingelogd als {redacteur.naam} ({redacteur.rol}, schrijft in{" "}
-            {redacteur.talen.map((t) => taalNamen[t]).join(", ") || "geen taal"})
+            {redacteur.talen.map((t) => teksten.nl.taalNaam[t]).join(", ") || "geen taal"})
           </p>
         </div>
         <div className="beheer-knoppen">

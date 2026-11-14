@@ -1,3 +1,4 @@
+import { zelfdePadAlternatieven } from "@/lib/hreflang";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -15,7 +16,11 @@ export async function generateMetadata({ params }: PageProps<"/[lang]/forum">): 
   const { lang } = await params;
   if (!isTaal(lang)) return {};
   const t = ledenTeksten[lang].forum;
-  return { title: t.titel, description: t.intro };
+  return {
+    title: t.titel,
+    description: t.intro,
+    alternates: zelfdePadAlternatieven(lang, "/forum"),
+  };
 }
 
 // Voorpagina van het forum: onderwerpen en de recentste discussies.
