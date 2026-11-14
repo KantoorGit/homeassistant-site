@@ -95,8 +95,8 @@ export default async function Talen({ searchParams }: PageProps<"/beheer/talen">
         <strong>{laatsteRonde ? tijdTekst(laatsteRonde) : "nog niet"}</strong>
       </p>
       <p className="uitleg">
-        De vertalingen worden gemaakt door een geplande taak in de Claude-app op de MacBook (ongeveer
-        elk uur, zolang de Mac aan staat en de app open is). Je kunt de taak ook met de hand starten in
+        De vertalingen worden gemaakt door een geplande taak in de Claude-app op de MacBook (om de 6
+        dagen, zolang de Mac aan staat en de app open is). Je kunt de taak ook met de hand starten in
         de Claude-app.
       </p>
 
