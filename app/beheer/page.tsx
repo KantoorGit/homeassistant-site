@@ -34,6 +34,11 @@ export default async function Beheeroverzicht({
           <Link href="/beheer/artikelen/nieuw" className="knop">
             Nieuw artikel
           </Link>
+          {redacteur.rol === "beheerder" && (
+            <Link href="/beheer/statistieken" className="knop knop-licht">
+              Statistieken
+            </Link>
+          )}
           <form action={uitloggen}>
             <button type="submit" className="knop-link">
               Uitloggen

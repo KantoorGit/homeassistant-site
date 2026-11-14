@@ -1,5 +1,7 @@
 "use server";
 
+import { after } from "next/server";
+import { telDoel } from "@/lib/meting/server";
 import { refresh, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { draadPad, isPostTaal, onderwerpen } from "@/lib/forum";
@@ -79,6 +81,7 @@ export async function nieuweDraad(
   if (error || typeof id !== "number") return fout(error?.message ?? "");
 
   updateTag("forum");
+  after(() => telDoel("forum_vraag"));
   redirect(draadPad(taal, { id, onderwerp, titel }));
 }
 
@@ -114,6 +117,7 @@ export async function reageer(
 
   updateTag("forum");
   refresh();
+  after(() => telDoel("forum_reactie"));
 
   const { data: nieuw } = await supabase
     .from("forum_berichten")
@@ -161,6 +165,7 @@ export async function meld(
   const reden = schoon(tekst(formData, "reden"));
   if (reden.length < 3 || reden.length > 1000) redirect(`${pad}?fout=REDEN`);
   await voerUit(taal, pad, "forum_meld", { p_bericht: berichtId, p_reden: reden });
+  after(() => telDoel("forum_melding"));
   redirect(`${pad}?gemeld=1#bericht-${berichtId}`);
 }
 

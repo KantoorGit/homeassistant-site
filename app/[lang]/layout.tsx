@@ -7,6 +7,10 @@ import "@fontsource-variable/roboto-slab";
 import "../globals.css";
 import Accountmenu from "@/components/Accountmenu";
 import Categoriebalk from "@/components/Categoriebalk";
+import Cookiebanner from "@/components/Cookiebanner";
+import CookieInstellingenLink from "@/components/CookieInstellingenLink";
+import Meting from "@/components/Meting";
+import { bannerTeksten } from "@/lib/meting/teksten";
 import Taalkiezer from "@/components/Taalkiezer";
 import {
   isTaal,
@@ -68,8 +72,16 @@ export default async function RootLayout({
         <footer className="voet">
           <div className="inhoud">
             <p>{t.onafhankelijk}</p>
+            <p className="voet-links">
+              <Link href={`/${lang}/privacy`}>{bannerTeksten[lang].privacy}</Link>
+              <CookieInstellingenLink tekst={bannerTeksten[lang].instellingen} />
+            </p>
           </div>
         </footer>
+        <Cookiebanner taal={lang} />
+        <Suspense>
+          <Meting taal={lang} />
+        </Suspense>
       </body>
     </html>
   );

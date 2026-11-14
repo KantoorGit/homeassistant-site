@@ -1,5 +1,7 @@
 "use server";
 
+import { after } from "next/server";
+import { telDoel } from "@/lib/meting/server";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { gebruikHerstelcode, maakHerstelcodes } from "@/lib/herstelcodes";
@@ -120,6 +122,7 @@ export async function registreer(
 
   // Ook als het adres al een account heeft, geeft Supabase geen fout; zo
   // kan niemand uitzoeken welke adressen een account hebben.
+  after(() => telDoel("registratie_voltooid"));
   return { melding: t.controleerEmail };
 }
 
@@ -190,6 +193,7 @@ export async function bevestigTweeFactor(
   });
   if (error) return { fout: authFout(taal, error), poging };
 
+  after(() => telDoel("ingelogd"));
   redirect(volgende);
 }
 
@@ -255,6 +259,7 @@ export async function bevestig2faInstellen(
   const { error } = await supabase.auth.mfa.challengeAndVerify({ factorId, code });
   if (error) return { ...behoud, fout: authFout(taal, error) };
 
+  after(() => telDoel("2fa_gekoppeld"));
   const codes = await maakHerstelcodes(sessie.id);
   return codes ? { codes } : { codes: [], codesNietBeschikbaar: true };
 }

@@ -54,6 +54,7 @@ export default function Taalkiezer({ taal }: { taal: Taal }) {
           aria-label={taalNamen[t]}
           aria-current={t === taal ? "true" : undefined}
           onClick={() => onthoud(t)}
+          data-meting-taal={t}
         >
           {taalKort[t]}
         </Link>

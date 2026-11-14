@@ -54,3 +54,10 @@ export async function vereisRedacteur() {
   };
   return { supabase, redacteur };
 }
+
+// Alleen de beheerder (W-ANA-50): bezoekersstatistieken.
+export async function vereisBeheerder() {
+  const resultaat = await vereisRedacteur();
+  if (resultaat.redacteur.rol !== "beheerder") redirect("/beheer/geen-toegang");
+  return resultaat;
+}
