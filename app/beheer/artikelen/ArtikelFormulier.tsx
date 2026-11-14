@@ -5,6 +5,7 @@ import Vertaalschakelaars from "@/components/Vertaalschakelaars";
 import { telTekst, vul, type BeheerTeksten } from "@/lib/beheer/teksten";
 import type { Taal } from "@/lib/site";
 import { artikelOpslaan, artikelVertalen } from "../acties";
+import Afbeeldingveld, { type AfbeeldingWaarden } from "./Afbeeldingveld";
 import Mediaveld from "./Mediaveld";
 import Plekkiezer from "./Plekkiezer";
 
@@ -26,7 +27,7 @@ export type FormulierGegevens = {
   status: "concept" | "gepubliceerd";
   gepubliceerdOp: string; // "2026-11-13T10:00", Amsterdamse tijd
   positie: number | null;
-  afbeeldingUrl: string;
+  afbeelding: AfbeeldingWaarden;
   videoUrl: string;
   teksten: Partial<Record<Taal, Tekstvelden>>;
   vertaalinfo: Partial<Record<Taal, Vertaalinfo>>;
@@ -185,11 +186,10 @@ export default function ArtikelFormulier({
           <legend>{f.beeld}</legend>
           <div className="beeld-blok">
             <h3>{f.afbeelding}</h3>
-            <Mediaveld
-              soort="afbeelding"
-              naam="afbeelding_url"
-              waarde={gegevens.afbeeldingUrl}
+            <Afbeeldingveld
+              waarden={gegevens.afbeelding}
               t={f}
+              tu={t.uitsnede}
               supabaseUrl={supabaseUrl}
               supabaseSleutel={supabaseSleutel}
             />

@@ -888,3 +888,74 @@ line.stat-raster {
     padding-bottom: 0;
   }
 }
+
+/* Afbeelding bijsnijden (W-ADM-22) */
+.afbeelding-voorbeelden {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 280px));
+  align-items: start;
+  justify-items: stretch;
+}
+
+.afbeelding-voorbeelden figure {
+  margin: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.afbeelding-voorbeelden figcaption {
+  font-size: 0.85rem;
+  color: #555;
+}
+
+.afbeelding-voorbeelden img {
+  width: 100%;
+  max-height: none;
+  object-fit: contain;
+}
+
+.afbeelding-voorbeelden img.voorbeeld-169 {
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
+
+.afbeelding-voorbeelden small,
+.afbeelding-voorbeelden .beheer-knoppen {
+  grid-column: 1 / -1;
+}
+
+.bijsnijden {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: var(--wit);
+}
+
+.bijsnijden .ReactCrop {
+  max-width: 100%;
+  justify-self: start;
+}
+
+.bijsnijden .ReactCrop img {
+  max-width: 100%;
+  max-height: 70vh;
+  display: block;
+}
+
+.bijsnijden-verhouding {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  align-items: center;
+}
+
+.bijsnijden-168 {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-top: 1px dashed rgba(255, 255, 255, 0.9);
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.9);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25) inset;
+  pointer-events: none;
+}
