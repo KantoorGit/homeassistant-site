@@ -27,6 +27,10 @@ export type BeheerArtikel = {
   uitgelicht: boolean;
   // Uit supabase/007_…sql; ontbreekt zolang dat niet is uitgevoerd.
   positie?: number | null;
+  // Uit supabase/008_…sql (bijsnijden); ontbreken zolang dat niet is uitgevoerd.
+  afbeelding_origineel_url?: string | null;
+  afbeelding_bron_url?: string | null;
+  afbeelding_uitsnede?: unknown;
   is_voorbeeld: boolean;
   bijgewerkt: string;
   artikel_vertalingen: BeheerVertaling[];
@@ -99,4 +103,35 @@ export function categorieKeuzes(
   const eigen = alle.find((c) => c.id === huidig);
   if (eigen?.verwijderd) keuzes.unshift({ id: eigen.id, naam: eigen.naam[taal], verwijderd: true });
   return keuzes;
+}
+
+export type Uitsnede = {
+  x: number;
+  y: number;
+  breedte: number;
+  hoogte: number;
+  verhouding: "16:9" | "vrij";
+};
+
+// Het bewaarde kader van een bijgesneden afbeelding (W-ADM-22), in procenten
+// van het origineel; null als het ontbreekt of niet klopt.
+export function leesUitsnede(waarde: unknown): Uitsnede | null {
+  let w = waarde;
+  if (typeof w === "string") {
+    try {
+      w = JSON.parse(w);
+    } catch {
+      return null;
+    }
+  }
+  if (!w || typeof w !== "object") return null;
+  const o = w as Record<string, unknown>;
+  const getal = (n: unknown) => (typeof n === "number" && Number.isFinite(n) && n >= 0 && n <= 100 ? n : null);
+  const x = getal(o.x);
+  const y = getal(o.y);
+  const breedte = getal(o.breedte);
+  const hoogte = getal(o.hoogte);
+  if (x === null || y === null || !breedte || !hoogte) return null;
+  if (x + breedte > 100.01 || y + hoogte > 100.01) return null;
+  return { x, y, breedte, hoogte, verhouding: o.verhouding === "vrij" ? "vrij" : "16:9" };
 }

@@ -2,6 +2,7 @@
 
 import { updateTag } from "next/cache";
 import { redirect } from "next/navigation";
+import { leesUitsnede } from "@/lib/beheer/artikelen";
 import { amsterdamNaarIso, maakSlug } from "@/lib/beheer/hulp";
 import { maakSessieClient } from "@/lib/beheer/supabase-sessie";
 import { beheerT } from "@/lib/beheer/taal";
@@ -149,6 +150,17 @@ export async function artikelOpslaan(
   if (afbeeldingUrl && !/^https:\/\/\S+$/.test(afbeeldingUrl)) {
     return { fout: t.afbeeldingHttps };
   }
+  // Bijgesneden afbeelding (W-ADM-22): het origineel, de bron op internet
+  // en het kader worden bewaard; afbeelding_url is de uitsnede.
+  const isHttps = (w: string) => /^https:\/\/\S+$/.test(w);
+  const origineelTekst = tekst(formData, "afbeelding_origineel_url");
+  const bronTekst = tekst(formData, "afbeelding_bron_url");
+  const afbeeldingOrigineel = afbeeldingUrl && isHttps(origineelTekst) ? origineelTekst : null;
+  const afbeeldingBron = afbeeldingUrl && isHttps(bronTekst) ? bronTekst : null;
+  const afbeeldingUitsnede =
+    afbeeldingOrigineel && afbeeldingUrl !== afbeeldingOrigineel
+      ? leesUitsnede(tekst(formData, "afbeelding_uitsnede"))
+      : null;
   // Plek op de voorpagina (W-ADM-17): leeg = geen vaste plek, 1 = groot
   // bovenaan, 2-7 = de zes plekken eronder.
   const positieTekst = tekst(formData, "positie");
@@ -168,6 +180,9 @@ export async function artikelOpslaan(
     originele_taal: origineleTaal,
     auteur: tekst(formData, "auteur") || "Redactie",
     afbeelding_url: afbeeldingUrl,
+    afbeelding_origineel_url: afbeeldingOrigineel,
+    afbeelding_bron_url: afbeeldingBron,
+    afbeelding_uitsnede: afbeeldingUitsnede,
     video_url: videoUrl,
     status,
     gepubliceerd_op: gepubliceerdOp,
@@ -175,19 +190,37 @@ export async function artikelOpslaan(
     bijgewerkt_door: redacteur.id,
   };
 
+  // Zolang supabase/008_afbeelding_uitsnede.sql niet is uitgevoerd, bestaan
+  // de kolommen voor het origineel nog niet: dan alleen de uitsnede bewaren.
+  const zonderOrigineel = () => {
+    const kopie: Partial<typeof gegevens> = { ...gegevens };
+    delete kopie.afbeelding_origineel_url;
+    delete kopie.afbeelding_bron_url;
+    delete kopie.afbeelding_uitsnede;
+    return kopie;
+  };
+  const kolomOntbreekt = (e: { code?: string; message?: string } | null) =>
+    !!e && (e.code === "PGRST204" || /afbeelding_(origineel_url|bron_url|uitsnede)/.test(e.message ?? ""));
+
   let artikelId = id;
   if (artikelId) {
-    const { error } = await supabase
+    let { error } = await supabase
       .from("artikelen")
       .update(gegevens)
       .eq("id", artikelId);
+    if (kolomOntbreekt(error)) {
+      ({ error } = await supabase.from("artikelen").update(zonderOrigineel()).eq("id", artikelId));
+    }
     if (error) return { fout: vul(t.opslaanMislukt, { fout: error.message }) };
   } else {
-    const { data, error } = await supabase
+    let { data, error } = await supabase
       .from("artikelen")
       .insert(gegevens)
       .select("id")
       .single();
+    if (kolomOntbreekt(error)) {
+      ({ data, error } = await supabase.from("artikelen").insert(zonderOrigineel()).select("id").single());
+    }
     if (error || !data) {
       return { fout: vul(t.opslaanMislukt, { fout: error?.message ?? "?" }) };
     }

@@ -8,6 +8,7 @@ import {
   categorieKeuzes,
   eenArtikel,
   kopVan,
+  leesUitsnede,
   positieVan,
 } from "@/lib/beheer/artikelen";
 import { isoNaarAmsterdam } from "@/lib/beheer/hulp";
@@ -122,7 +123,12 @@ export default async function ArtikelBewerken({
           status: artikel.status,
           gepubliceerdOp: isoNaarAmsterdam(artikel.gepubliceerd_op),
           positie: positieVan(artikel),
-          afbeeldingUrl: artikel.afbeelding_url ?? "",
+          afbeelding: {
+            afbeeldingUrl: artikel.afbeelding_url ?? "",
+            origineelUrl: artikel.afbeelding_origineel_url ?? "",
+            bronUrl: artikel.afbeelding_bron_url ?? "",
+            uitsnede: leesUitsnede(artikel.afbeelding_uitsnede),
+          },
           videoUrl: artikel.video_url ?? "",
           teksten,
           vertaalinfo,
