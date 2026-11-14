@@ -972,3 +972,105 @@ summary:focus-visible {
     grid-template-columns: 1fr;
   }
 }
+
+/* Voettekst: links naar privacy en cookie-instellingen */
+.voet-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 8px !important;
+}
+
+.voet-links a,
+.voet-link {
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+/* Cookiebanner (W-ANA-70): onderaan, blokkeert de site niet */
+.cookiebanner {
+  position: fixed;
+  inset: auto 16px 16px 16px;
+  z-index: 50;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.cookiebanner-inhoud {
+  pointer-events: auto;
+  max-width: 640px;
+  background: var(--wit);
+  color: var(--tekst);
+  border-top: 4px solid var(--oranje);
+  border-radius: 6px;
+  box-shadow: 0 6px 24px rgb(0 0 0 / 0.18);
+  padding: 20px 24px;
+}
+
+.cookiebanner h2 {
+  font-size: 1.15rem;
+  color: var(--blauw);
+  margin-bottom: 8px;
+}
+
+.cookiebanner p {
+  margin: 0 0 10px;
+  font-size: 0.95rem;
+}
+
+.cookiebanner-gpc {
+  color: var(--leigrijs);
+}
+
+.cookiebanner-knoppen {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+/* Beide knoppen even groot en even opvallend */
+.cookiebanner-knoppen button {
+  font: inherit;
+  font-weight: 600;
+  padding: 10px 16px;
+  border-radius: 4px;
+  border: 2px solid var(--blauw);
+  background: var(--blauw);
+  color: var(--wit);
+  cursor: pointer;
+}
+
+.cookiebanner-knoppen button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.cookiebanner-knoppen button:focus-visible {
+  outline: 3px solid var(--oranje);
+  outline-offset: 2px;
+}
+
+.tabel-scroll {
+  overflow-x: auto;
+}
+
+.cookietabel {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.95rem;
+}
+
+.cookietabel th,
+.cookietabel td {
+  text-align: left;
+  border-bottom: 1px solid var(--lichtgrijs);
+  padding: 8px 10px;
+  vertical-align: top;
+}

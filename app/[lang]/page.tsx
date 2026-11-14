@@ -37,7 +37,11 @@ export default async function Voorpagina({ params }: PageProps<"/[lang]">) {
           ))}
         </div>
       </div>
-      <aside className="zijkolom" aria-labelledby="laatste-nieuws">
+      <aside
+        className="zijkolom"
+        aria-labelledby="laatste-nieuws"
+        data-meting-plek="nieuwskolom"
+      >
         <h2 id="laatste-nieuws">{t.laatsteNieuws}</h2>
         <ol>
           {artikelen.slice(0, 10).map((artikel) => {

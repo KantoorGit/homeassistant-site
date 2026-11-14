@@ -86,6 +86,8 @@ export default async function Artikelpagina({ params }: Props) {
 
   return (
     <article
+      data-meting-artikel={artikel.id}
+      data-meting-categorie={artikel.categorieId}
       className="artikel"
       lang={artikel.nietVertaald ? taalCode[artikel.tekstTaal] : undefined}
     >
@@ -119,7 +121,8 @@ export default async function Artikelpagina({ params }: Props) {
       {video ? (
         <div className="video">
           <iframe
-            src={`https://www.youtube-nocookie.com/embed/${video}`}
+            src={`https://www.youtube-nocookie.com/embed/${video}?enablejsapi=1`}
+            data-meting-video={video}
             title={artikel.kop}
             allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen

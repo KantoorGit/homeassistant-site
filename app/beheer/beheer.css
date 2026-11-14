@@ -315,3 +315,263 @@
     display: none;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Bezoekersstatistieken
+   --------------------------------------------------------------------------- */
+
+.knop-licht {
+  background: var(--lichtgrijs);
+  color: var(--blauw);
+}
+
+.statistieken {
+  --staaf: #3f5bc2; /* lichtere stap van het huisblauw, gecontroleerd op contrast */
+  --raster: #e3e5e8;
+}
+
+.stat-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  border-bottom: 2px solid var(--lichtgrijs);
+  margin: 8px 0 16px;
+}
+
+.stat-tabs a {
+  padding: 8px 14px;
+  text-decoration: none;
+  color: var(--leigrijs);
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  font-weight: 600;
+}
+
+.stat-tabs a[aria-current="page"] {
+  color: var(--blauw);
+  border-bottom-color: var(--oranje);
+}
+
+/* Alle filters in één rij boven de rapporten */
+.stat-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+  margin-bottom: 20px;
+  font-size: 0.9rem;
+}
+
+.stat-filters label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: var(--leigrijs);
+}
+
+.stat-filters select,
+.stat-filters input:not([type="checkbox"]) {
+  font: inherit;
+  padding: 6px 8px;
+  border: 1px solid #c8ccd1;
+  border-radius: 4px;
+  background: var(--wit);
+}
+
+.stat-filters .stat-vinkje {
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  padding-bottom: 8px;
+}
+
+.stat-filters .knop {
+  padding: 7px 16px;
+}
+
+.stat-tegels {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.stat-tegel {
+  border: 1px solid var(--lichtgrijs);
+  border-radius: 6px;
+  padding: 14px 16px;
+}
+
+.stat-tegel p {
+  margin: 0;
+}
+
+.stat-titel {
+  color: var(--leigrijs);
+  font-size: 0.85rem;
+}
+
+.stat-waarde {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--tekst);
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-verschil {
+  font-size: 0.8rem;
+  color: var(--leigrijs);
+}
+
+.stat-verschil span {
+  color: var(--leigrijs);
+}
+
+.stat-verschil.goed {
+  color: #1d7a3a;
+}
+
+.stat-verschil.minder {
+  color: #a8321f;
+}
+
+.stat-toestemming,
+.stat-uitleg {
+  font-size: 0.9rem;
+  color: var(--leigrijs);
+  margin: 0 0 16px;
+}
+
+.etiket-toestemming {
+  background: #fde8c8;
+  font-weight: 600;
+  vertical-align: middle;
+}
+
+.stat-grafiek {
+  margin: 0 0 16px;
+}
+
+.stat-grafiek figcaption {
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.stat-grafiek-scroll {
+  overflow-x: auto;
+}
+
+.stat-raster line,
+line.stat-raster {
+  stroke: var(--raster);
+  stroke-width: 1;
+}
+
+.stat-as {
+  fill: var(--leigrijs);
+  font-size: 11px;
+}
+
+.stat-staaf path {
+  fill: var(--staaf);
+}
+
+.stat-staaf:hover path {
+  fill: var(--blauw);
+}
+
+.stat-tabelweergave {
+  margin-bottom: 24px;
+}
+
+.stat-tabelweergave summary {
+  cursor: pointer;
+  color: var(--blauw);
+  margin-bottom: 8px;
+}
+
+.stat-raster {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+  gap: 20px 28px;
+}
+
+.stat-blok {
+  min-width: 0;
+  margin-bottom: 8px;
+}
+
+.stat-blok-kop {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.stat-blok h2 {
+  font-size: 1.05rem;
+  margin: 0 0 8px;
+}
+
+.stat-tabel {
+  font-size: 0.9rem;
+}
+
+.stat-tabel .getal {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.stat-tabel .tekstcel {
+  word-break: break-all;
+}
+
+.stat-balk-cel {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  min-width: 90px;
+  position: relative;
+}
+
+.stat-balk {
+  display: inline-block;
+  height: 8px;
+  max-width: 60px;
+  border-radius: 0 4px 4px 0;
+  background: var(--staaf);
+  opacity: 0.35;
+}
+
+.stat-leeg {
+  color: var(--leigrijs);
+  font-size: 0.9rem;
+}
+
+.stat-trechter {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 20px;
+  max-width: 520px;
+}
+
+.stat-trechter li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--lichtgrijs);
+}
+
+.stat-trechter .stat-balk {
+  max-width: 160px;
+  width: 0;
+}
+
+@media (max-width: 560px) {
+  .stat-raster {
+    grid-template-columns: 1fr;
+  }
+}

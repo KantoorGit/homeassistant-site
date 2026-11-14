@@ -23,7 +23,10 @@ export default function Artikelkaart({
     (video ? `https://i.ytimg.com/vi/${video}/hqdefault.jpg` : null);
 
   return (
-    <article className={groot ? "kaart kaart-groot" : "kaart"}>
+    <article
+      className={groot ? "kaart kaart-groot" : "kaart"}
+      data-meting-plek={groot ? "hoofdartikel" : "raster"}
+    >
       <div className="kaart-beeld" aria-hidden="true">
         {beeld && (
           // eslint-disable-next-line @next/next/no-img-element
