@@ -10,7 +10,9 @@ import Categoriebalk from "@/components/Categoriebalk";
 import Taalkiezer from "@/components/Taalkiezer";
 import {
   isTaal,
+  siteAdres,
   siteNaam,
+  taalCode,
   talen,
   teksten,
   zoekmachinesToelaten,
@@ -26,6 +28,7 @@ export async function generateMetadata({
   const { lang } = await params;
   if (!isTaal(lang)) return {};
   return {
+    metadataBase: new URL(siteAdres),
     title: { default: siteNaam, template: `%s | ${siteNaam}` },
     description: teksten[lang].ondertitel,
     robots: zoekmachinesToelaten ? undefined : { index: false, follow: false },
@@ -41,7 +44,7 @@ export default async function RootLayout({
   const t = teksten[lang];
 
   return (
-    <html lang={lang}>
+    <html lang={taalCode[lang]}>
       <body>
         <header className="kop">
           <div className="inhoud kop-rij">

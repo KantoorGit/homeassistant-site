@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { kiesbareCategorieen } from "@/lib/beheer/artikelen";
 import { vereisRedacteur } from "@/lib/beheer/toegang";
-import { talen, taalNamen } from "@/lib/site";
+import { talen, teksten } from "@/lib/site";
 import ArtikelFormulier from "../ArtikelFormulier";
 
 export const metadata: Metadata = { title: "Nieuw artikel" };
@@ -32,7 +32,7 @@ export default async function NieuwArtikel() {
         }}
         categorieen={kiesbareCategorieen.map((c) => ({ id: c.id, naam: c.naam.nl }))}
         talen={[...talen]}
-        taalNamen={taalNamen}
+        taalNamen={teksten.nl.taalNaam}
         mijnTalen={redacteur.talen}
         opgeslagen={false}
       />

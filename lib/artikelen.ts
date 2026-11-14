@@ -21,6 +21,11 @@ export type Artikel = {
   intro: string;
   tekst: string;
   automatischVertaald: boolean;
+  // Er is (nog) geen vertaling in de gevraagde taal: de bezoeker ziet het
+  // origineel, met de melding in welke taal het geschreven is (W-FOR-03).
+  nietVertaald: boolean;
+  // Taal van de tekst die getoond wordt (bij nietVertaald het origineel).
+  tekstTaal: Taal;
   // Adressen van hetzelfde artikel in de andere talen.
   slugPerTaal: Partial<Record<Taal, string>>;
 };
@@ -54,7 +59,10 @@ const kolommen =
   "*, artikel_vertalingen(taal, slug, kop, intro, tekst, automatisch_vertaald)";
 
 function naarArtikel(rij: ArtikelRij, taal: Taal): Artikel | null {
-  const vertaling = rij.artikel_vertalingen.find((v) => v.taal === taal);
+  const origineleTaal = isTaal(rij.originele_taal) ? rij.originele_taal : taal;
+  const eigen = rij.artikel_vertalingen.find((v) => v.taal === taal);
+  const vertaling =
+    eigen ?? rij.artikel_vertalingen.find((v) => v.taal === origineleTaal);
   if (!vertaling) return null;
   const slugPerTaal: Partial<Record<Taal, string>> = {};
   for (const v of rij.artikel_vertalingen) {
@@ -64,7 +72,7 @@ function naarArtikel(rij: ArtikelRij, taal: Taal): Artikel | null {
     id: rij.id,
     categorieId: rij.categorie_id,
     gepubliceerdOp: rij.gepubliceerd_op,
-    origineleTaal: isTaal(rij.originele_taal) ? rij.originele_taal : taal,
+    origineleTaal,
     auteur: rij.auteur,
     afbeeldingUrl: rij.afbeelding_url,
     videoUrl: rij.video_url ?? null,
@@ -76,6 +84,8 @@ function naarArtikel(rij: ArtikelRij, taal: Taal): Artikel | null {
     intro: vertaling.intro,
     tekst: vertaling.tekst,
     automatischVertaald: vertaling.automatisch_vertaald,
+    nietVertaald: !eigen,
+    tekstTaal: eigen ? taal : origineleTaal,
     slugPerTaal,
   };
 }
@@ -150,11 +160,14 @@ export async function getArtikel(
   return rij ? naarArtikel(rij, taal) : null;
 }
 
+// Adres van een artikel in een taal. Is het artikel in die taal nog niet
+// vertaald, dan krijgt het adres het webadres van het origineel.
 export function artikelPad(
-  artikel: Pick<Artikel, "categorieId" | "slugPerTaal">,
+  artikel: Pick<Artikel, "categorieId" | "slugPerTaal" | "origineleTaal">,
   taal: Taal,
 ): string | null {
-  const slug = artikel.slugPerTaal[taal];
+  const slug =
+    artikel.slugPerTaal[taal] ?? artikel.slugPerTaal[artikel.origineleTaal];
   const categorie = categorieen.find((c) => c.id === artikel.categorieId);
   if (!slug || !categorie || !categorie.slug[taal]) return null;
   return `/${taal}/${categorie.slug[taal]}/${slug}`;

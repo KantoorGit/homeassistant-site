@@ -5,7 +5,7 @@ import { artikelPad } from "@/lib/artikelen";
 import { eenArtikel, kiesbareCategorieen, kopVan } from "@/lib/beheer/artikelen";
 import { isoNaarAmsterdam } from "@/lib/beheer/hulp";
 import { vereisRedacteur } from "@/lib/beheer/toegang";
-import { isTaal, talen, taalNamen, type Taal } from "@/lib/site";
+import { isTaal, talen, teksten as siteTeksten, type Taal } from "@/lib/site";
 import { artikelVerwijderen } from "../../acties";
 import ArtikelFormulier, { type FormulierGegevens } from "../ArtikelFormulier";
 
@@ -32,7 +32,11 @@ export default async function ArtikelBewerken({
     artikel.gepubliceerd_op !== null &&
     new Date(artikel.gepubliceerd_op) <= new Date();
   const pad = artikelPad(
-    { categorieId: artikel.categorie_id, slugPerTaal },
+    {
+      categorieId: artikel.categorie_id,
+      slugPerTaal,
+      origineleTaal: artikel.originele_taal,
+    },
     artikel.originele_taal,
   );
 
@@ -66,7 +70,7 @@ export default async function ArtikelBewerken({
         }}
         categorieen={kiesbareCategorieen.map((c) => ({ id: c.id, naam: c.naam.nl }))}
         talen={[...talen]}
-        taalNamen={taalNamen}
+        taalNamen={siteTeksten.nl.taalNaam}
         mijnTalen={redacteur.talen}
         opgeslagen={opgeslagen === "1"}
       />

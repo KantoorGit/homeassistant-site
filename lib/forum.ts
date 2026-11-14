@@ -1,45 +1,28 @@
-import type { Taal } from "./site";
+import { talen, teksten, type Taal } from "./site";
 
-// De zes talen waarin gepost kan worden (W-FOR-02), ook al staat de
-// interface nu alleen in het Nederlands en Engels.
-export const postTalen = ["nl", "en", "zh", "fr", "de", "es"] as const;
-export type PostTaal = (typeof postTalen)[number];
+// De zes talen waarin gepost kan worden (W-FOR-02): dezelfde als de talen
+// van de site.
+export const postTalen = talen;
+export type PostTaal = Taal;
 
 export function isPostTaal(waarde: unknown): waarde is PostTaal {
   return (postTalen as readonly unknown[]).includes(waarde);
 }
 
-export const postTaalNamen: Record<Taal, Record<PostTaal, string>> = {
-  nl: {
-    nl: "Nederlands",
-    en: "Engels",
-    zh: "Chinees",
-    fr: "Frans",
-    de: "Duits",
-    es: "Spaans",
-  },
-  en: {
-    nl: "Dutch",
-    en: "English",
-    zh: "Chinese",
-    fr: "French",
-    de: "German",
-    es: "Spanish",
-  },
-};
+function hoofdletter(woord: string): string {
+  return woord.charAt(0).toLocaleUpperCase() + woord.slice(1);
+}
 
-// "Automatisch vertaald uit het Duits" / "... from German"
-export const postTaalInZin: Record<Taal, Record<PostTaal, string>> = {
-  nl: {
-    nl: "het Nederlands",
-    en: "het Engels",
-    zh: "het Chinees",
-    fr: "het Frans",
-    de: "het Duits",
-    es: "het Spaans",
-  },
-  en: postTaalNamen.en,
-};
+// Namen van de talen per taal van de site, met hoofdletter ("Duits",
+// "Allemand", "德语").
+export const postTaalNamen = Object.fromEntries(
+  talen.map((taal) => [
+    taal,
+    Object.fromEntries(
+      talen.map((p) => [p, hoofdletter(teksten[taal].taalNaam[p])]),
+    ) as Record<PostTaal, string>,
+  ]),
+) as Record<Taal, Record<PostTaal, string>>;
 
 // Onderwerpen van het forum (W-FOR-05). De id staat in de database; het
 // adres en de naam verschillen per taal.
@@ -53,65 +36,93 @@ export type Onderwerp = {
 export const onderwerpen: Onderwerp[] = [
   {
     id: "installatie",
-    slug: { nl: "installatie", en: "installation" },
-    naam: { nl: "Installatie", en: "Installation" },
+    slug: { nl: "installatie", en: "installation", zh: "anzhuang", fr: "installation", de: "installation", es: "instalacion" },
+    naam: { nl: "Installatie", en: "Installation", zh: "安装", fr: "Installation", de: "Installation", es: "Instalación" },
     uitleg: {
       nl: "Home Assistant installeren, updaten en back-ups maken.",
       en: "Installing and updating Home Assistant, and making backups.",
+      zh: "安装和更新 Home Assistant，以及创建备份。",
+      fr: "Installer et mettre à jour Home Assistant, et faire des sauvegardes.",
+      de: "Home Assistant installieren, aktualisieren und Backups erstellen.",
+      es: "Instalar y actualizar Home Assistant, y hacer copias de seguridad.",
     },
   },
   {
     id: "automatiseringen",
-    slug: { nl: "automatiseringen", en: "automations" },
-    naam: { nl: "Automatiseringen", en: "Automations" },
+    slug: { nl: "automatiseringen", en: "automations", zh: "zidonghua", fr: "automatisations", de: "automatisierungen", es: "automatizaciones" },
+    naam: { nl: "Automatiseringen", en: "Automations", zh: "自动化", fr: "Automatisations", de: "Automatisierungen", es: "Automatizaciones" },
     uitleg: {
       nl: "Triggers, voorwaarden, acties, scripts en blueprints.",
       en: "Triggers, conditions, actions, scripts and blueprints.",
+      zh: "触发器、条件、动作、脚本和蓝图。",
+      fr: "Déclencheurs, conditions, actions, scripts et blueprints.",
+      de: "Auslöser, Bedingungen, Aktionen, Skripte und Blueprints.",
+      es: "Disparadores, condiciones, acciones, scripts y blueprints.",
     },
   },
   {
     id: "dashboards",
-    slug: { nl: "dashboards", en: "dashboards" },
-    naam: { nl: "Dashboards", en: "Dashboards" },
+    slug: { nl: "dashboards", en: "dashboards", zh: "yibiaopan", fr: "tableaux-de-bord", de: "dashboards", es: "paneles" },
+    naam: { nl: "Dashboards", en: "Dashboards", zh: "仪表板", fr: "Tableaux de bord", de: "Dashboards", es: "Paneles" },
     uitleg: {
       nl: "Kaarten, thema's en overzichten van je huis.",
       en: "Cards, themes and overviews of your home.",
+      zh: "卡片、主题和家居概览。",
+      fr: "Cartes, thèmes et vues d'ensemble de votre maison.",
+      de: "Karten, Themes und Übersichten deines Zuhauses.",
+      es: "Tarjetas, temas y vistas generales de tu casa.",
     },
   },
   {
     id: "integraties",
-    slug: { nl: "integraties", en: "integrations" },
-    naam: { nl: "Integraties", en: "Integrations" },
+    slug: { nl: "integraties", en: "integrations", zh: "jicheng", fr: "integrations", de: "integrationen", es: "integraciones" },
+    naam: { nl: "Integraties", en: "Integrations", zh: "集成", fr: "Intégrations", de: "Integrationen", es: "Integraciones" },
     uitleg: {
       nl: "Apparaten en diensten koppelen.",
       en: "Connecting devices and services.",
+      zh: "连接设备和服务。",
+      fr: "Connecter des appareils et des services.",
+      de: "Geräte und Dienste verbinden.",
+      es: "Conectar dispositivos y servicios.",
     },
   },
   {
     id: "claude-en-ai",
-    slug: { nl: "claude-en-ai", en: "claude-and-ai" },
-    naam: { nl: "Claude & AI", en: "Claude & AI" },
+    slug: { nl: "claude-en-ai", en: "claude-and-ai", zh: "claude-ai", fr: "claude-et-ia", de: "claude-und-ki", es: "claude-e-ia" },
+    naam: { nl: "Claude & AI", en: "Claude & AI", zh: "Claude 与 AI", fr: "Claude & IA", de: "Claude & KI", es: "Claude e IA" },
     uitleg: {
       nl: "Claude en andere AI gebruiken om Home Assistant in te richten.",
       en: "Using Claude and other AI to set up Home Assistant.",
+      zh: "使用 Claude 和其他 AI 配置 Home Assistant。",
+      fr: "Utiliser Claude et d'autres IA pour configurer Home Assistant.",
+      de: "Claude und andere KI nutzen, um Home Assistant einzurichten.",
+      es: "Usar Claude y otras IA para configurar Home Assistant.",
     },
   },
   {
     id: "hardware",
-    slug: { nl: "hardware", en: "hardware" },
-    naam: { nl: "Hardware", en: "Hardware" },
+    slug: { nl: "hardware", en: "hardware", zh: "yingjian", fr: "materiel", de: "hardware", es: "hardware" },
+    naam: { nl: "Hardware", en: "Hardware", zh: "硬件", fr: "Matériel", de: "Hardware", es: "Hardware" },
     uitleg: {
       nl: "Mini-pc's, Zigbee- en Matter-sticks, sensoren.",
       en: "Mini PCs, Zigbee and Matter dongles, sensors.",
+      zh: "迷你电脑、Zigbee 和 Matter 适配器、传感器。",
+      fr: "Mini-PC, clés Zigbee et Matter, capteurs.",
+      de: "Mini-PCs, Zigbee- und Matter-Sticks, Sensoren.",
+      es: "Mini PC, adaptadores Zigbee y Matter, sensores.",
     },
   },
   {
     id: "overig",
-    slug: { nl: "overig", en: "other" },
-    naam: { nl: "Overig", en: "Other" },
+    slug: { nl: "overig", en: "other", zh: "qita", fr: "autres", de: "sonstiges", es: "otros" },
+    naam: { nl: "Overig", en: "Other", zh: "其他", fr: "Autres", de: "Sonstiges", es: "Otros" },
     uitleg: {
       nl: "Alles wat nergens anders past.",
       en: "Everything that doesn't fit elsewhere.",
+      zh: "其他所有内容。",
+      fr: "Tout ce qui ne rentre pas ailleurs.",
+      de: "Alles, was nirgendwo sonst passt.",
+      es: "Todo lo que no encaja en otro sitio.",
     },
   },
 ];

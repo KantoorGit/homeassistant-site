@@ -8,7 +8,17 @@ import {
   getArtikelen,
 } from "@/lib/artikelen";
 import { youtubeId } from "@/lib/beheer/hulp";
-import { categorieen, categoriePad, isTaal, talen, teksten } from "@/lib/site";
+import {
+  categorieen,
+  categoriePad,
+  isTaal,
+  nietVertaaldZin,
+  taalCode,
+  talen,
+  teksten,
+  vertaaldUitZin,
+} from "@/lib/site";
+import { taalAlternatieven } from "@/lib/hreflang";
 
 type Props = PageProps<"/[lang]/[categorie]/[slug]">;
 
@@ -33,7 +43,23 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { lang, slug } = await params;
   if (!isTaal(lang)) return {};
   const artikel = await getArtikel(lang, slug);
-  return artikel ? { title: artikel.kop, description: artikel.intro } : {};
+  if (!artikel) return {};
+  const paden = Object.fromEntries(
+    // Alleen talen met een echte vertaling (geen terugval op het origineel).
+    talen.map((t) => [t, artikel.slugPerTaal[t] ? artikelPad(artikel, t) : null]),
+  );
+  return {
+    title: artikel.kop,
+    description: artikel.intro,
+    alternates: {
+      ...taalAlternatieven(lang, paden),
+      // Nog niet vertaald: deze pagina toont het origineel, dus dat is het
+      // canonieke adres.
+      ...(artikel.nietVertaald
+        ? { canonical: artikelPad(artikel, artikel.origineleTaal) }
+        : {}),
+    },
+  };
 }
 
 // Artikelpagina met kop, datum, auteur, beeld en tekst (requirement W-LAY-06).
@@ -53,31 +79,40 @@ export default async function Artikelpagina({ params }: Props) {
   const t = teksten[lang];
   const video = youtubeId(artikel.videoUrl);
   const categorie = categorieen.find((c) => c.id === artikel.categorieId)!;
-  const isVertaling = artikel.origineleTaal !== lang;
+  const isVertaling = artikel.origineleTaal !== lang && !artikel.nietVertaald;
   const origineel = isVertaling
     ? artikelPad(artikel, artikel.origineleTaal)
     : null;
 
   return (
-    <article className="artikel">
-      <p className="label">
+    <article
+      className="artikel"
+      lang={artikel.nietVertaald ? taalCode[artikel.tekstTaal] : undefined}
+    >
+      <p className="label" lang={taalCode[lang]}>
         <Link href={categoriePad(categorie, lang)}>{categorie.naam[lang]}</Link>
       </p>
       <h1>{artikel.kop}</h1>
-      <p className="artikel-meta">
+      <p className="artikel-meta" lang={taalCode[lang]}>
         <time dateTime={artikel.gepubliceerdOp}>{datumVan(artikel)}</time>
         {" · "}
         {t.door} {artikel.auteur}
       </p>
 
       {isVertaling && artikel.automatischVertaald && (
-        <p className="vertaalmelding">
-          {t.vertaaldUit} {t.taalInZin[artikel.origineleTaal]}.{" "}
+        <p className="vertaalmelding" lang={taalCode[lang]}>
+          {vertaaldUitZin(lang, artikel.origineleTaal)}.{" "}
           {origineel && (
             <Link href={origineel} hrefLang={artikel.origineleTaal}>
               {t.origineelBekijken}
             </Link>
           )}
+        </p>
+      )}
+
+      {artikel.nietVertaald && (
+        <p className="vertaalmelding" lang={taalCode[lang]}>
+          {nietVertaaldZin(lang, artikel.origineleTaal)}
         </p>
       )}
 
