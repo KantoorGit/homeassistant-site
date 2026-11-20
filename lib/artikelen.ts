@@ -204,23 +204,6 @@ export function datumVan(artikel: Artikel): string {
   }).format(new Date(artikel.gepubliceerdOp));
 }
 
-// Voor de verbindingstest: vraagt de artikelen rechtstreeks op, zonder de
-// bewaarde uitkomst en zonder terug te vallen op de voorbeelden.
-export async function controleerArtikelen(): Promise<
-  { aantal: number; fout: null } | { aantal: 0; fout: string; code: string }
-> {
-  const supabase = maakSupabaseClient();
-  if (!supabase) return { aantal: 0, fout: "Geen verbinding", code: "" };
-  const { data, error } = await supabase
-    .from("artikelen")
-    .select(kolommen)
-    .order("gepubliceerd_op", { ascending: false })
-    .limit(200)
-    .overrideTypes<ArtikelRij[], { merge: false }>();
-  if (error) return { aantal: 0, fout: error.message, code: error.code ?? "" };
-  return { aantal: data?.length ?? 0, fout: null };
-}
-
 // Verdeelt de artikelen over de voorpagina (W-ADM-17): plek 1 is het grote
 // hoofdartikel, plek 2 t/m 7 de zes kaarten eronder (twee rijen van drie).
 // Een artikel met een vaste plek staat daar; lege plekken worden gevuld met

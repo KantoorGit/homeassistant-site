@@ -1,8 +1,8 @@
 # homeassistant-site
 
-Website over Home Assistant. Dit is het eerste skelet: de voorpagina in de
-opbouw van nos.nl, de categoriebalk, twee talen en een test van de koppeling
-met de database.
+Website over Home Assistant (www.winstonyip.com): voorpagina in de opbouw van
+nos.nl, zes talen, beheerpaneel, accounts met verplichte 2FA, forum en eigen
+bezoekersstatistieken.
 
 ## Onderdelen
 
@@ -30,12 +30,26 @@ met de database.
 | `lib/herstelcodes.ts` | Herstelcodes voor 2FA (alleen op de server) |
 | `proxy.ts` | Vernieuwt de inlogsessie bij elk verzoek |
 
-## Koppeling met de database testen
+## Database bijwerken
 
-1. Open het Supabase-dashboard, ga naar de SQL Editor en voer de bestanden
-   in `supabase/` uit, in volgorde van nummer.
-2. Open op de gepubliceerde site `/nl/verbindingstest`.
-3. Vier keer "Goed" betekent dat de site de database en de artikelen leest.
+Open het Supabase-dashboard, ga naar de SQL Editor en voer de bestanden in
+`supabase/` uit, in volgorde van nummer. De testpagina `/nl/verbindingstest`
+is in beveiligingsronde 1 verwijderd (W-SEC-18). Of de database bereikbaar
+is, zie je in Vercel → Logs ("Supabase-ping gelukt").
+
+## Beveiliging van de code
+
+- **Content-Security-Policy** en andere beveiligingsheaders: `lib/csp.ts` en
+  `next.config.ts`.
+- **Automatische controles** bij elke pull request en elke week
+  (`.github/workflows/controles.yml`): typecontrole, ESLint, `npm audit`,
+  build, geheimendetectie (gitleaks) en een codescan (Semgrep, voorlopig
+  alleen als rapport).
+- **Updates:** Dependabot (`.github/dependabot.yml`) opent elke week pull
+  requests, pas 7 dagen na het verschijnen van een nieuwe versie.
+- **Installatiescripts van pakketten staan uit** (`.npmrc`), tegen besmette
+  pakketten. Geen enkel pakket van de site heeft ze nodig.
+- `/api/ping` werkt alleen met `CRON_SECRET` (in Vercel).
 
 ## Accounts en forum
 
