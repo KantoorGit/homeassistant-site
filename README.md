@@ -43,8 +43,7 @@ is, zie je in Vercel → Logs ("Supabase-ping gelukt").
   `next.config.ts`.
 - **Automatische controles** bij elke pull request en elke week
   (`.github/workflows/controles.yml`): typecontrole, ESLint, `npm audit`,
-  build, geheimendetectie (gitleaks) en een codescan (Semgrep, voorlopig
-  alleen als rapport).
+  build, geheimendetectie (gitleaks) en een codescan (Semgrep).
 - **Updates:** Dependabot (`.github/dependabot.yml`) opent elke week pull
   requests, pas 7 dagen na het verschijnen van een nieuwe versie.
 - **Installatiescripts van pakketten staan uit** (`.npmrc`), tegen besmette

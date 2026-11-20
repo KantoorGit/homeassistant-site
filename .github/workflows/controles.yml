@@ -78,7 +78,7 @@ jobs:
           GITLEAKS_ENABLE_COMMENTS: "false"
 
   codescan:
-    name: Codescan (Semgrep, voorlopig alleen rapport)
+    name: Codescan (Semgrep)
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -89,12 +89,10 @@ jobs:
       - name: Semgrep installeren (vaste versie)
         run: pipx install semgrep==1.186.0
 
-      # Voorlopig alleen een rapport in het logboek: de check blijft groen.
-      # Na het beoordelen van de eerste uitkomsten wordt dit blokkerend
-      # (dan --error toevoegen en continue-on-error weghalen).
+      # Blokkerend: elke bevinding maakt de check rood. De eerste scan
+      # (20 nov 2026) vond twee punten; beide zijn opgelost.
       - name: Codescan
-        continue-on-error: true
         run: >
-          semgrep scan --metrics=off
+          semgrep scan --metrics=off --error
           --config p/typescript --config p/react --config p/owasp-top-ten --config p/secrets
           --exclude node_modules --exclude .next
