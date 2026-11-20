@@ -289,7 +289,15 @@ export default function Meting({ taal, categorieen }: { taal: Taal; categorieen:
     const gemeld = new Map<string, Set<number>>();
     function aanmelden() {
       for (const frame of document.querySelectorAll<HTMLIFrameElement>("iframe[data-meting-video]")) {
-        frame.contentWindow?.postMessage(JSON.stringify({ event: "listening", id: frame.dataset.metingVideo }), "*");
+        // Alleen naar de YouTube-speler zelf sturen, niet naar "*" (codescan).
+        let doel: string;
+        try {
+          doel = new URL(frame.src).origin;
+        } catch {
+          continue;
+        }
+        if (!/^https:\/\/www\.youtube(-nocookie)?\.com$/.test(doel)) continue;
+        frame.contentWindow?.postMessage(JSON.stringify({ event: "listening", id: frame.dataset.metingVideo }), doel);
       }
     }
     function bericht(e: MessageEvent) {

@@ -1,0 +1,98 @@
+# Automatische controles (W-PRO-23, W-SEC-19, W-SEC-22).
+# Draait bij elke pull request naar main, bij elke wijziging in main, elke
+# maandag (ook zonder wijzigingen, voor nieuw bekende lekken) en met de hand.
+#
+# Externe acties staan vast op een commit (niet op een versienummer dat later
+# kan worden verplaatst), met de versie erachter als opmerking. Dependabot
+# houdt ze bij (.github/dependabot.yml).
+
+name: Controles
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  schedule:
+    - cron: "23 5 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: controles-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  code:
+    name: Typecontrole, lint, npm audit en build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Pakketten installeren (vaste versies uit package-lock.json)
+        run: npm ci
+
+      - name: Typecontrole
+        run: |
+          npx next typegen
+          npx tsc --noEmit
+
+      - name: ESLint
+        run: npm run lint
+
+      - name: Bekende lekken in pakketten van de site (npm audit)
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Build
+        run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"
+
+  geheimen:
+    name: Geheimen (gitleaks)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      # Geen licentie nodig voor een repository van een persoonlijk account.
+      - uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_ENABLE_COMMENTS: "false"
+
+  codescan:
+    name: Codescan (Semgrep)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Semgrep installeren (vaste versie)
+        run: pipx install semgrep==1.186.0
+
+      # Blokkerend: elke bevinding maakt de check rood. De eerste scan
+      # (20 nov 2026) vond twee punten; beide zijn opgelost.
+      - name: Codescan
+        run: >
+          semgrep scan --metrics=off --error
+          --config p/typescript --config p/react --config p/owasp-top-ten --config p/secrets
+          --exclude node_modules --exclude .next

@@ -1,0 +1,34 @@
+# Updates van pakketten en GitHub-acties (W-SEC-21, -22, W-PRO-28).
+# Een nieuwe versie wordt pas na 7 dagen voorgesteld: besmette versies worden
+# meestal binnen een paar dagen ontdekt en ingetrokken. Beveiligingsupdates
+# (aan te zetten in GitHub → Settings → Advanced Security → Dependabot
+# security updates) komen los hiervan en meteen.
+#
+# Elke update komt als pull request naar main; Winston test en voegt samen,
+# net als bij andere wijzigingen.
+
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/Amsterdam
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 5
+    groups:
+      kleine-updates:
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/Amsterdam
+    cooldown:
+      default-days: 7
